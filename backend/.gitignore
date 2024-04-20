@@ -2,14 +2,16 @@
 logs
 *.log
 
-.venv
-*.local
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+.venv
+.env
+
+*.pyc
+*.local
 *.suo
 *.ntvs*
 *.njsproj
