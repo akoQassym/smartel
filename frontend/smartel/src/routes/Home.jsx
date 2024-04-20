@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { SignIn, useUser } from "@clerk/clerk-react";
 import RouteButton from "../components/RouteButton";
 
 function Home() {
+  const { isSignedIn } = useUser();
+
   return (
     <>
       <div className="flex justify-center items-center h-screen">
@@ -13,9 +16,29 @@ function Home() {
             Schedule appointments, upload medical documents, and view
             consultation reports.
           </h1>
-          <div className="flex justify-center">
-            <RouteButton routeLink={"/dashboard"} buttonText={"Get Started"} />
-          </div>
+          {isSignedIn ? (
+            <>
+              <div className="flex justify-center">
+                <RouteButton
+                  routeLink={"/dashboard"}
+                  buttonText={"Patient Portal"}
+                />
+                <RouteButton
+                  routeLink={"/physicianDashboard"}
+                  buttonText={"Physician Portal"}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-center">
+                <RouteButton
+                  routeLink={"/dashboard"}
+                  buttonText={"Get Started"}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

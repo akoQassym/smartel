@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { UserButton } from "@clerk/clerk-react";
 import RouteButton from "./RouteButton";
 
 function NavBar() {
@@ -30,7 +31,9 @@ function NavBar() {
               Consultation Reports
             </div>
           </Link>
-          <RouteButton routeLink={"/"} buttonText={"Logout"} />
+          <div className="flex justify-center items-center mx-4">
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
       </div>
     </>
