@@ -5,7 +5,7 @@ function RouteButton({ routeLink, buttonText }) {
   return (
     <>
       <Link to={routeLink}>
-        <div className="rounded-lg bg-red-500 text-white font-montserrat py-3 px-5 max-w-fit mx-auto text-center text-sm mt-2 hover:bg-red-400">
+        <div className="rounded-md bg-[#FF3131] text-white font-montserrat py-2 px-3 max-w-fit text-center text-sm mt-2 mx-3 hover:bg-red-400">
           {buttonText}
         </div>
       </Link>
