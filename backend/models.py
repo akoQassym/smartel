@@ -1,38 +1,37 @@
 # Define your database models here. This keeps your database schema separate
 # from your business logic, which is generally a good practice.
-from sqlalchemy import Column, Integer, String, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy_utils import EmailType, PasswordType
 
-Base = declarative_base()
+from base import Base
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Text
+from datetime import datetime
 
 class User(Base):
-    __tablename__ = 'users'
-    user_id = Column(Integer, primary_key=True)
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
-    email = Column(EmailType, unique=True, nullable=False)
-    password = Column(PasswordType(schemes=['pbkdf2_sha512']), nullable=False)
-    role = Column(String(50), nullable=False)
-    
-    __mapper_args__ = {
-        'polymorphic_identity': 'user',
-        'polymorphic_on': role
-    }
+    __tablename__ = "users"
 
-class Doctor(User):
-    __mapper_args__ = {
-        'polymorphic_identity': 'doctor',
-    }
-    # Additional Doctor-specific attributes here
+    user_id : Mapped[int] = mapped_column(primary_key = True)
+    first_name : Mapped[str] = mapped_column()
+    last_name : Mapped[str] = mapped_column()
+    email : Mapped[str] = mapped_column()
+    phone_number : Mapped[str] = mapped_column()
+    password : Mapped[str] = mapped_column()
 
-class Patient(User):
-    __mapper_args__ = {
-        'polymorphic_identity': 'patient',
-    }
-    # Additional Patient-specific attributes here
+# class Patient(Base):
+#     __tablename__ = "patient"
+#     pass
 
-# Setup your database connection and engine here
-engine = create_engine('postgresql://username:password@localhost/mydatabase')
-Base.metadata.create_all(engine)
+# class Physician(Base):
+#     __tablename__ = "physician"
+#     pass
+
+# class Specialization(Base):
+#     __tablename__ = "specialization"
+#     pass
+
+# class Appointments(Base):
+#     __tablename__ = "appointments"
+#     pass
+
+# class SummaryDocument(Base):
+#     __tablename__ = "summary_document"
+#     pass
