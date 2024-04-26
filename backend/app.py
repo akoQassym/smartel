@@ -4,8 +4,13 @@
 
 from fastapi import FastAPI
 
-app = FastAPI()
+app = FastAPI(
+    title= "Smartel API",
+    description= "This is an API for Smartel System",
+    docs_url= "/",
+)
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
