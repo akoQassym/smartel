@@ -135,10 +135,10 @@ async def get_specializations():
 
 
 # ------ APIS FOR APPOINTMENTS ------ #
-@app.post('/add_appointment', status_code=HTTPStatus.CREATED)   
-async def add_appointment(appointment_data: AppointmentCreateModel): 
+@app.post('/add_appointment/{physician_id}', status_code=HTTPStatus.CREATED)   
+async def add_appointment(physician_id: str, appointment_data: AppointmentCreateModel): 
     new_appointment = Appointment(
-        physician_id = appointment_data.physician_id,
+        physician_id = physician_id,
         start_date_time = appointment_data.start_date_time,
     )
 
