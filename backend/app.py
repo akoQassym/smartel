@@ -33,13 +33,13 @@ session = async_sessionmaker(
 # here use the CRUD class to interact with the database initializing class takes
 # a good amount of time, so it is preferable to create a global instance to use
 # it throughout the application
-# db = CRUD()
-crud_user = CRUD(User)`
+# crud_user = CRUD()
+crud_user = CRUD(User)
 crud_patient = CRUD(Patient)
 crud_physician = CRUD(Physician)
 crud_specialization = CRUD(Specialization)
 crud_appointment = CRUD(Appointment)
-crud_summary_document = CRUD(SummaryDocument)`
+crud_summary_document = CRUD(SummaryDocument)
 
 @app.get("/")
 async def root():
@@ -47,47 +47,14 @@ async def root():
 
 
 @app.post('/register', status_code=HTTPStatus.CREATED)
-async def create_user(user_data: UserCreateModel, 
-                      patient_data: PatientCreateModel = None, 
-                      physician_data: PhysicianCreateModel = None, 
-                      user_type: str = Query(..., description="Type parameter")):
+async def create_user(user_data: UserCreateModel):
     new_user = User(
         user_id = user_data.user_id,
         first_name = user_data.first_name,
         last_name = user_data.last_name,
         email = user_data.email,
-        phone_number = user_data.phone_number,
+        # phone_number = user_data.phone_number,
     )
 
-    user = await db.create_user(new_user, session)
-
-    if user_type == 'patient':
-        if not patient_data:
-            raise HTTPException(status_code=400, detail="Missing patient data")
-        new_patient = Patient(
-            user_id=user_data.user_id,
-            height=patient_data.height,
-            weight=patient_data.weight,
-        )
-        patient = await db.create_patient(new_patient, session)
-        return {"user": user, "patient": patient}
-        # return user, patient
-
-    elif user_type == 'physician':
-        if not physician_data:
-            raise HTTPException(status_code=400, detail="Missing physician data")
-        new_physician = Physician(
-            user_id=user_data.user_id, 
-            height=physician_data.height, 
-            weight=physician_data.weight,
-        )
-        physician = await db.create_physician(new_physician, session)
-        return {"user": user, "physician": physician}
-
-    else:
-        raise HTTPException(status_code=400, detail="Invalid user type")
-        # return user, physician # or patient or physician
-
-
-def spec_user(user_id, user_type):
-    pass
+    user = await crud_user.create(new_user, session)
+    return user
