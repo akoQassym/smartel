@@ -55,7 +55,7 @@ crud_summary_document = CRUD(SummaryDocument)
 async def root():
     return {"message": "Hello World"}
 
-
+# ------ APIS FOR USERS ------ #
 @app.post('/register', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel): 
     new_user = User(
@@ -112,8 +112,8 @@ async def edit_user(
 
     raise HTTPException(status_code=404, detail="No valid data provided or user not found")
 
-
-@app.post('/add_spec', status_code=HTTPStatus.CREATED)
+# ------ APIS FOR SPECIALIZATION ------ #
+@app.post('/add_specialization', status_code=HTTPStatus.CREATED)
 async def add_spec(spec_data: SpecializationCreateModel): 
     new_specialization = Specialization(
         description = spec_data.description,
@@ -122,6 +122,39 @@ async def add_spec(spec_data: SpecializationCreateModel):
 
     spec = await crud_specialization.create(new_specialization, session)
     return spec
+
+@app.get('/get_specializations', status_code=HTTPStatus.OK)
+async def get_specializations():
+    specializations = await crud_specialization.get_all(session)
+    return specializations
+
+
+# ------ APIS FOR APPOINTMENTS ------ #
+@app.post('/add_appointment', status_code=HTTPStatus.CREATED)   
+async def add_appointment(appointment_data: AppointmentCreateModel): 
+    new_appointment = Appointment(
+        physician_id = appointment_data.physician_id,
+        start_date_time = appointment_data.start_date_time,
+    )
+
+    appointment = await crud_appointment.create(new_appointment, session)
+    return appointment
+
+@app.post('get_appointments/{physician_id}', status_code=HTTPStatus.OK)
+async def get_appointments(physician_id: str):
+    pass
+
+@app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
+    pass
+
+@app.post('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def delete_appointment(appointment_id: str):
+    pass
+
+@app.post('/book_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def book_appointment(appointment_id: str):
+    pass
 
 '''
     done: create_user(user_id, email)
