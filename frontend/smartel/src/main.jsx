@@ -12,12 +12,17 @@ import Dashboard from "./routes/Dashboard.jsx";
 import MedicalDocumentsPage from "./routes/MedicalDocumentsPage.jsx";
 import AppointmentsPage from "./routes/AppointmentsPage.jsx";
 import ConsultationReportsPage from "./routes/ConsultationReportsPage.jsx";
+import Profile from "./routes/Profile.jsx";
 import PhysicianDashboard from "./routes/PhysicianDashboard.jsx";
+import PhysicianConsultationGen from "./routes/PhysicianConsultationGen.jsx";
+import PhysicianAppointments from "./routes/PhysicianAppointments.jsx";
+import PhysicianProfile from "./routes/PhysicianProfile.jsx";
 
 // For Clerk Authentication
 import { ClerkProvider, SignUp, SignIn } from "@clerk/clerk-react";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import SignInPage from "./routes/SignInPage.jsx";
+import { userRoleLoader } from "./routes/Loaders.jsx";
 const VITE_CLERK_PUBLISHABLE_KEY =
   "pk_test_ZW5qb3llZC1tYWxsYXJkLTM4LmNsZXJrLmFjY291bnRzLmRldiQ";
 
@@ -45,30 +50,23 @@ const ClerkWithRoutes = () => {
             path="/consultationreports"
             element={<ConsultationReportsPage />}
           />
+          <Route path="/patientProfile" element={<Profile />} />
           {/*Physician portal routes below */}
           <Route path="/physicianDashboard" element={<PhysicianDashboard />} />
+          <Route
+            path="/physicianConsultationReports"
+            element={<PhysicianConsultationGen />}
+          />
+          <Route
+            path="/physicianAppointments"
+            element={<PhysicianAppointments />}
+          />
+          <Route path="/physicianProfile" element={<PhysicianProfile />} />
         </Route>
       </Routes>
     </ClerkProvider>
   );
 };
-
-// ReactDOM.createRoot(document.getElementById("root")).render(
-//   <React.StrictMode>
-//     <Router>
-//       <Routes>
-//         <Route path="/" element={<Home />} />
-//         <Route path="/dashboard" element={<Dashboard />} />
-//         <Route path="/medicaldocs" element={<MedicalDocumentsPage />} />
-//         <Route path="/appointmentspage" element={<AppointmentsPage />} />
-//         <Route
-//           path="/consultationreports"
-//           element={<ConsultationReportsPage />}
-//         />
-//       </Routes>
-//     </Router>
-//   </React.StrictMode>
-// );
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -3,6 +3,7 @@ logs
 *.log
 
 # Editor directories and files
+__pycache__
 .vscode/*
 !.vscode/extensions.json
 .idea

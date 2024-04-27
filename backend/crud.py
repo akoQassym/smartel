@@ -24,22 +24,27 @@ class CRUD:
 
     async def get_one(self, id, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(self.model).filter_by(id=id)
+            query = select(self.model).filter_by(user_id=id)
             result = await session.execute(query)
             try:
                 return result.scalar_one()
             except NoResultFound:
                 return None
 
-    async def get_all(self, async_session: async_sessionmaker[AsyncSession]):
+    async def get_all(self, async_session: async_sessionmaker[AsyncSession], filter = None):
         async with async_session() as session:
-            query = select(self.model)
+            if filter:
+                query = select(self.model).filter_by(**filter) 
+                # The **filter syntax in Python is used to unpack a dictionary
+                # into keyword arguments that can be passed to a function.
+            else:
+                query = select(self.model)
             result = await session.execute(query)
             return result.scalars().all()
 
     async def update(self, id, update_data, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(self.model).filter_by(id=id)
+            query = select(self.model).filter_by(user_id=id)
             result = await session.execute(query)
             try:
                 instance = result.scalar_one()
