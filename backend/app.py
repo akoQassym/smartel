@@ -4,7 +4,7 @@
 
 # standard library
 from http.client import HTTPException
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Depends
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
@@ -26,9 +26,9 @@ app = FastAPI(
 )
 
 session = async_sessionmaker(
-    bind = engine,
-    expire_on_commit = True,
-)
+        bind = engine,
+        expire_on_commit = False,
+    )
 
 # here use the CRUD class to interact with the database initializing class takes
 # a good amount of time, so it is preferable to create a global instance to use
@@ -47,7 +47,7 @@ async def root():
 
 
 @app.post('/register', status_code=HTTPStatus.CREATED)
-async def create_user(user_data: UserCreateModel):
+async def create_user(user_data: UserCreateModel): 
     new_user = User(
         user_id = user_data.user_id,
         first_name = user_data.first_name,
@@ -80,3 +80,19 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
 
     physician = await crud_physician.create(new_physician, session)
     return physician
+
+'''
+create_user(user_id, email)
+add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
+edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
+edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+delete_user(user_id)
+get_specializations()
+get_appointments(physician_id) // returns all available appointments for that specialization
+add_appointment(date_time, phsyician_id, duration)
+edit_appointment(appointment_id, date_time, duration)
+delete_appointment(appointment_id)
+book_appointment(appointment_id)
+generate_document(audio_blob)
+'''

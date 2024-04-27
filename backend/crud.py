@@ -45,6 +45,7 @@ class CRUD:
                 for key, value in update_data.items():
                     setattr(instance, key, value)
                 await session.commit()
+                
                 return instance
             except NoResultFound:
                 return None
