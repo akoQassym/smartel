@@ -3,34 +3,69 @@ import { Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
 import RouteButton from "./RouteButton";
 
-function NavBar() {
+function NavBar({ linksArray, showPhysicianLink, showPatientLink }) {
+  let bgColor = "bg-white";
+  if (showPatientLink) {
+    bgColor = "bg-blue-100";
+  }
   return (
     <>
-      <div className="flex justify-between shadow-sm">
-        <Link to={"/dashboard"}>
-          <div className="text-center py-3 px-4">
-            <h1 className="font-montserrat font-bold text-lg  text-blue-950">
-              Smartel
-            </h1>
-          </div>
-        </Link>
+      <div className={`flex justify-between shadow-sm ${bgColor}`}>
+        <div className="flex justify-normal">
+          {showPatientLink ? (
+            <>
+              <Link to={"/physicianDashboard"}>
+                <div className="text-center py-3 px-4">
+                  <h1 className="font-montserrat font-bold text-lg  text-blue-950">
+                    Smartel
+                  </h1>
+                </div>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to={"/dashboard"}>
+                <div className="text-center py-3 px-4">
+                  <h1 className="font-montserrat font-bold text-lg  text-blue-950">
+                    Smartel
+                  </h1>
+                </div>
+              </Link>
+            </>
+          )}
+
+          {showPhysicianLink ? (
+            <>
+              <RouteButton
+                routeLink={"/physicianDashboard"}
+                buttonText={"Go to Physician Portal"}
+              />
+            </>
+          ) : (
+            <></>
+          )}
+          {showPatientLink ? (
+            <>
+              <RouteButton
+                routeLink={"/dashboard"}
+                buttonText={"Go to Patient Portal"}
+              />
+            </>
+          ) : (
+            <></>
+          )}
+        </div>
 
         <div className="flex justify-normal">
-          <Link to={"/medicaldocs"}>
-            <div className="font-montserrat text-sm p-4 hover:text-[#FF3131] text-blue-950">
-              Medical Documents
-            </div>
-          </Link>
-          <Link to={"/appointmentspage"}>
-            <div className="font-montserrat text-sm p-4 hover:text-[#FF3131] text-blue-950">
-              Appointments
-            </div>
-          </Link>
-          <Link to={"/consultationreports"}>
-            <div className="font-montserrat text-sm p-4 hover:text-[#FF3131] text-blue-950">
-              Consultation Reports
-            </div>
-          </Link>
+          {linksArray.map((l) => {
+            return (
+              <Link to={l.link} key={l.link}>
+                <div className="font-montserrat text-sm py-4 px-3 hover:text-[#FF3131] text-blue-950">
+                  {l.text}
+                </div>
+              </Link>
+            );
+          })}
           <div className="flex justify-center items-center mx-4">
             <UserButton afterSignOutUrl="/" />
           </div>

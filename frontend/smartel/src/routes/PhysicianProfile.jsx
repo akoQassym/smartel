@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import { physicianNavLinks } from "../utils/physicianNavLinks";
 
-function PhysicianDashboard() {
+function PhysicianProfile() {
   const { user } = useUser();
   const { isLoaded, session } = useSession(); // You get role information from session
   const navigate = useNavigate();
@@ -33,10 +33,7 @@ function PhysicianDashboard() {
         <div className="flex justify-center items-center h-screen">
           <div className="block text-center px-10">
             <h1 className="font-montserrat text-7xl mb-6 text-blue-950">
-              Welcome to your Physician Portal Dr. {user?.firstName}
-            </h1>
-            <h1 className="font-montserrat text-blue-950 text-sm mb-6">
-              Schedule appointments and generate consultation reports
+              Physician Profile
             </h1>
           </div>
         </div>
@@ -45,4 +42,4 @@ function PhysicianDashboard() {
   );
 }
 
-export default PhysicianDashboard;
+export default PhysicianProfile;
