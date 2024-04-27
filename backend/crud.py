@@ -8,152 +8,67 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 
 # import functions
-from models import User, Patient, Physician #, Specialization, Appointments, SummaryDocument
-
+from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
 
 class CRUD:
-    # ----- CRUD for User ----- #
-    async def create_user(self, user: User, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            session.add(user)
-            await session.commit()
-            await session.refresh(user) # refresh the user object to get the updated user object
-            return user
+    def __init__(self, model):
+        self.model = model
+        self.model_name = model.__name__.lower()
 
-    async def get_user(self, user_id: int, async_session: async_sessionmaker[AsyncSession]):
+    async def create(self, instance_data, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(User).filter(User.user_id == user_id)
+            session.add(instance_data)
+            await session.commit()
+            await session.refresh(instance_data)
+            return instance_data
+
+    async def get_one(self, id, async_session: async_sessionmaker[AsyncSession]):
+        async with async_session() as session:
+            query = select(self.model).filter_by(id=id)
             result = await session.execute(query)
             try:
-                return result.scalar().one()
+                return result.scalar_one()
             except NoResultFound:
                 return None
 
-    async def get_all_users(self, async_session: async_sessionmaker[AsyncSession]):
+    async def get_all(self, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(User)
+            query = select(self.model)
             result = await session.execute(query)
             return result.scalars().all()
 
-    async def update_user(self, user_id: int, update_data: dict, async_session: async_sessionmaker[AsyncSession]):
+    async def update(self, id, update_data, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(User).filter(User.user_id == user_id)
+            query = select(self.model).filter_by(id=id)
             result = await session.execute(query)
             try:
-                user = result.scalar().one()
+                instance = result.scalar_one()
                 for key, value in update_data.items():
-                    setattr(user, key, value)
+                    setattr(instance, key, value)
                 await session.commit()
-                return user
+                return instance
             except NoResultFound:
                 return None
 
-    async def delete_user(self, user_id: int, async_session: async_sessionmaker[AsyncSession]):
+    async def delete(self, id, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(User).filter(User.user_id == user_id)
+            query = select(self.model).filter_by(id=id)
             result = await session.execute(query)
             try:
-                user = result.scalar().one()
-                session.delete(user)
+                instance = result.scalar_one()
+                session.delete(instance)
                 await session.commit()
                 return True
             except NoResultFound:
                 return False
 
-    # ----- CRUD for Patients ----- #
-    async def create_patient(self, patient: Patient, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            session.add(patient)
-            await session.commit()
-            await session.refresh(patient)
-            return patient
+'''
+    crud_user = CRUD(User)
+    crud_patient = CRUD(Patient)
+    crud_physician = CRUD(Physician)
+    crud_specialization = CRUD(Specialization)
+    crud_appointment = CRUD(Appointment)
+    crud_summary_document = CRUD(SummaryDocument)
+'''
 
-    async def get_patient(self, patient_id: int, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Patient).filter(Patient.user_id == patient_id)
-            result = await session.execute(query)
-            try:
-                return result.scalar().one()
-            except NoResultFound:
-                return None
 
-    async def get_all_patients(self, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Patient)
-            result = await session.execute(query)
-            return result.scalars().all()
-
-    async def update_patient(self, patient_id: int, update_data: dict, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Patient).filter(Patient.user_id == patient_id)
-            result = await session.execute(query)
-            try:
-                patient = result.scalar().one()
-                for key, value in update_data.items():
-                    setattr(patient, key, value)
-                await session.commit()
-                return patient
-            except NoResultFound:
-                return None
-
-    async def delete_patient(self, patient_id: int, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Patient).filter(Patient.user_id == patient_id)
-            result = await session.execute(query)
-            try:
-                patient = result.scalar().one()
-                session.delete(patient)
-                await session.commit()
-                return True
-            except NoResultFound:
-                return False
-
-    # ----- CRUD for Physician ----- #
-    async def create_physician(self, physician: Physician, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            session.add(physician)
-            await session.commit()
-            await session.refresh(physician)
-            return physician
-
-    async def get_physician(self, physician_id: int, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Physician).filter(Physician.user_id == physician_id)
-            result = await session.execute(query)
-            try:
-                return result.scalar().one()
-            except NoResultFound:
-                return None
-
-    async def get_all_physicians(self, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Physician)
-            result = await session.execute(query)
-            return result.scalars().all()
-
-    async def update_physician(self, physician_id: int, update_data: dict, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Physician).filter(Physician.user_id == physician_id)
-            result = await session.execute(query)
-            try:
-                physician = result.scalar().one()
-                for key, value in update_data.items(): 
-                # a faster way to update the physician object rather then
-                # updating each field individually
-                    setattr(physician, key, value)
-                await session.commit()
-                return physician
-            except NoResultFound:
-                return None
-
-    async def delete_physician(self, physician_id: int, async_session: async_sessionmaker[AsyncSession]):
-        async with async_session() as session:
-            query = select(Physician).filter(Physician.user_id == physician_id)
-            result = await session.execute(query)
-            try:
-                physician = result.scalar().one()
-                session.delete(physician)
-                await session.commit()
-                return True
-            except NoResultFound:
-                return False
