@@ -16,7 +16,7 @@ import uuid
 from crud import CRUD
 from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
-from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel #, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
+from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
 
 app = FastAPI(
@@ -53,7 +53,6 @@ async def create_user(user_data: UserCreateModel):
         first_name = user_data.first_name,
         last_name = user_data.last_name,
         email = user_data.email,
-        # phone_number = user_data.phone_number,
     )
 
     user = await crud_user.create(new_user, session)
@@ -88,8 +87,6 @@ async def edit_user(
     patient_data: Optional[PatientCreateModel] = Body(default=None),
     physician_data: Optional[PhysicianCreateModel] = Body(default=None)
 ):
-    crud_patient = CRUD(Patient)
-    crud_physician = CRUD(Physician)
 
     # Check and update patient
     if patient_data:
@@ -105,12 +102,23 @@ async def edit_user(
 
     raise HTTPException(status_code=404, detail="No valid data provided or user not found")
 
+
+@app.post('/add_spec', status_code=HTTPStatus.CREATED)
+async def add_spec(spec_data: SpecializationCreateModel): 
+    new_specialization = Specialization(
+        description = spec_data.description,
+        name = spec_data.name,
+    )
+
+    spec = await crud_specialization.create(new_specialization, session)
+    return spec
+
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
     done: (implemented in a separate registration) add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
-    edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
-    edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+    done: edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
+    done: edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
     delete_user(user_id)
     get_specializations()
     get_appointments(physician_id) // returns all available appointments for that specialization

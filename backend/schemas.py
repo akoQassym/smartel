@@ -44,6 +44,9 @@ class PatientModel(BaseModel):
     height: str
     weight: str
     phone_number: str
+    sex: str
+    birth_date: datetime
+    blood_type: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -54,6 +57,9 @@ class PatientCreateModel(BaseModel):
     height: str
     weight: str
     phone_number: str
+    sex: str
+    birth_date: datetime
+    blood_type: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -72,6 +78,8 @@ class PhysicianModel(BaseModel):
     user_id: str
     specialization_id: int
     phone_number: str
+    sex: str
+    birth_date: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -81,6 +89,8 @@ class PhysicianModel(BaseModel):
 class PhysicianCreateModel(BaseModel):
     specialization_id: int
     phone_number: str
+    sex: str
+    birth_date: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -98,12 +108,14 @@ class PhysicianCreateModel(BaseModel):
 class SpecializationModel(BaseModel):
     specialization_id: int
     description: str
+    name: str
 
     class Config:
         orm_mode = True
 
 class SpecializationCreateModel(BaseModel):
     description: str
+    name: str
 
     class Config:
         orm_mode = True
@@ -116,9 +128,8 @@ class SpecializationCreateModel(BaseModel):
 # ----- Models for Appointment ----- #
 class AppointmentModel(BaseModel):
     appointment_id: int
-    date_time: datetime
+    start_date_time: datetime
     isBooked: bool
-    description: str
     physician_id: str
     patient_id: str
 
@@ -126,11 +137,8 @@ class AppointmentModel(BaseModel):
         orm_mode = True
 
 class AppointmentCreateModel(BaseModel):
-    date_time: datetime
-    isBooked: bool
-    description: str
+    start_date_time: datetime
     physician_id: str
-    patient_id: str
 
     class Config:
         orm_mode = True
