@@ -26,7 +26,7 @@ app = FastAPI(
 
 session = async_sessionmaker(
     bind = engine,
-    expir_on_commit = False,
+    expire_on_commit = False,
 )
 
 # here use the CRUD class to interact with the database
@@ -40,12 +40,11 @@ async def root():
 @app.post('/users', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel):
     new_user = User(
-        user_id = user_data.user_id,
+        # user_id = user_data.user_id,
         first_name = user_data.first_name,
         last_name = user_data.last_name,
         email = user_data.email,
         phone_number = user_data.phone_number,
-        password = user_data.password
     )
 
     user = await db.create_user(new_user, session)
