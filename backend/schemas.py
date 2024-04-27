@@ -68,7 +68,10 @@ class PatientCreateModel(BaseModel):
             "example": {
                 "height": "The height of the patient",
                 "weight": "The weight of the patient",
-                "phone_number": "The phone number of the user"
+                "phone_number": "The phone number of the user",
+                "sex": "Can be male, female, or other",
+                "birth_date": "The birth date of the user",
+                "blood_type": "The blood type of the patient"
             }
         }
     )
@@ -99,7 +102,9 @@ class PhysicianCreateModel(BaseModel):
         json_schema_extra={
             "example": {
                 "specialization_id": "0",
-                "phone_number": "The phone number of the user"
+                "phone_number": "The phone number of the user",
+                "sex": "Can be male, female, or other",
+                "birth_date": "The birth date of the user"
             }
         }
     )
@@ -121,13 +126,14 @@ class SpecializationCreateModel(BaseModel):
         orm_mode = True
         schema_extra = {
             "example": {
-                "description": "Cardiology"
+                "name": "Cardiology",
+                "description": "The study of the heart and its functions"
             }
         }
 
 # ----- Models for Appointment ----- #
 class AppointmentModel(BaseModel):
-    appointment_id: int
+    appointment_id: str
     start_date_time: datetime
     isBooked: bool
     physician_id: str
@@ -147,26 +153,26 @@ class AppointmentCreateModel(BaseModel):
                 "date_time": "2024-04-12T14:30:00",
                 "isBooked": True,
                 "description": "Quarterly check-up",
-                "physician_id": "1",
-                "patient_id": "1"
+                "physician_id": "clerk_id",
+                "patient_id": "clerk_id"
             }
         }
 
 # ----- Models for SummaryDocument ----- #
 class SummaryDocumentModel(BaseModel):
-    summaryDocId: int
-    appointment_id: int
+    summary_doc_id: str
+    appointment_id: str
 
     class Config:
         orm_mode = True
 
 class SummaryDocumentCreateModel(BaseModel):
-    appointment_id: int
+    appointment_id: str
 
     class Config:
         orm_mode = True
         schema_extra = {
             "example": {
-                "appointment_id": 1
+                "appointment_id": "A type uuid string for foreign key reference"
             }
         }
