@@ -5,6 +5,8 @@
 from base import Base, engine
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Text, ForeignKey, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 from datetime import datetime
 
 class User(Base):
@@ -22,6 +24,9 @@ class Patient(Base):
     height: Mapped[str] = mapped_column(nullable=False)
     weight: Mapped[str] = mapped_column(nullable=False)
     phone_number : Mapped[str] = mapped_column(nullable=False)
+    birth_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    sex: Mapped[str] = mapped_column(nullable=False)
+    blood_type: Mapped[str] = mapped_column(nullable=False)
     #__mapper_args__ = {'polymorphic_identity': 'patient'}
 
 class Physician(Base):
@@ -30,6 +35,8 @@ class Physician(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     specialization_id: Mapped[int] = mapped_column(ForeignKey('specializations.specialization_id'))
     phone_number : Mapped[str] = mapped_column(nullable=False)
+    birth_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    sex: Mapped[str] = mapped_column(nullable=False)
 
     specialization: Mapped['Specialization'] = relationship('Specialization', back_populates='physicians')
     appointments: Mapped['Appointment'] = relationship('Appointment', back_populates='physician')
@@ -42,7 +49,8 @@ class Physician(Base):
 class Specialization(Base):
     __tablename__ = 'specializations'
 
-    specialization_id: Mapped[int] = mapped_column(primary_key=True)
+    specialization_id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     physicians: Mapped['Physician'] = relationship('Physician', back_populates='specialization')
@@ -50,13 +58,12 @@ class Specialization(Base):
 class Appointment(Base):
     __tablename__ = 'appointments'
 
-    appointment_id: Mapped[int] = mapped_column(primary_key=True)
-    date_time: Mapped[datetime] = mapped_column(nullable=False)
-    isBooked: Mapped[bool] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(Text)
+    appointment_id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    start_date_time: Mapped[datetime] = mapped_column(nullable=False)
+    isBooked: Mapped[bool] = mapped_column(nullable=False, default=False)
 
-    physician_id: Mapped[str] = mapped_column(ForeignKey('physicians.user_id'))
-    patient_id: Mapped[str] = mapped_column(ForeignKey('patients.user_id'))
+    physician_id: Mapped[str] = mapped_column(ForeignKey('physicians.user_id'), nullable=False)
+    patient_id: Mapped[str] = mapped_column(ForeignKey('patients.user_id'), nullable=True)
 
     physician: Mapped['Physician'] = relationship('Physician', back_populates='appointments')
     patient: Mapped['Patient'] = relationship('Patient')
@@ -64,7 +71,7 @@ class Appointment(Base):
 class SummaryDocument(Base):
     __tablename__ = 'summary_documents'
 
-    summaryDocId: Mapped[int] = mapped_column(primary_key=True)
-    appointment_id: Mapped[int] = mapped_column(ForeignKey('appointments.appointment_id'))
+    summary_doc_id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    appointment_id: Mapped[str] = mapped_column(ForeignKey('appointments.appointment_id'))
 
     appointment: Mapped['Appointment'] = relationship('Appointment')

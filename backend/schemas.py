@@ -44,6 +44,9 @@ class PatientModel(BaseModel):
     height: str
     weight: str
     phone_number: str
+    sex: str
+    birth_date: datetime
+    blood_type: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -54,6 +57,9 @@ class PatientCreateModel(BaseModel):
     height: str
     weight: str
     phone_number: str
+    sex: str
+    birth_date: datetime
+    blood_type: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -62,7 +68,10 @@ class PatientCreateModel(BaseModel):
             "example": {
                 "height": "The height of the patient",
                 "weight": "The weight of the patient",
-                "phone_number": "The phone number of the user"
+                "phone_number": "The phone number of the user",
+                "sex": "Can be male, female, or other",
+                "birth_date": "The birth date of the user",
+                "blood_type": "The blood type of the patient"
             }
         }
     )
@@ -72,6 +81,8 @@ class PhysicianModel(BaseModel):
     user_id: str
     specialization_id: int
     phone_number: str
+    sex: str
+    birth_date: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -81,6 +92,8 @@ class PhysicianModel(BaseModel):
 class PhysicianCreateModel(BaseModel):
     specialization_id: int
     phone_number: str
+    sex: str
+    birth_date: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -89,7 +102,9 @@ class PhysicianCreateModel(BaseModel):
         json_schema_extra={
             "example": {
                 "specialization_id": "0",
-                "phone_number": "The phone number of the user"
+                "phone_number": "The phone number of the user",
+                "sex": "Can be male, female, or other",
+                "birth_date": "The birth date of the user"
             }
         }
     )
@@ -98,27 +113,29 @@ class PhysicianCreateModel(BaseModel):
 class SpecializationModel(BaseModel):
     specialization_id: int
     description: str
+    name: str
 
     class Config:
         orm_mode = True
 
 class SpecializationCreateModel(BaseModel):
     description: str
+    name: str
 
     class Config:
         orm_mode = True
         schema_extra = {
             "example": {
-                "description": "Cardiology"
+                "name": "Cardiology",
+                "description": "The study of the heart and its functions"
             }
         }
 
 # ----- Models for Appointment ----- #
 class AppointmentModel(BaseModel):
-    appointment_id: int
-    date_time: datetime
+    appointment_id: str
+    start_date_time: datetime
     isBooked: bool
-    description: str
     physician_id: str
     patient_id: str
 
@@ -126,11 +143,8 @@ class AppointmentModel(BaseModel):
         orm_mode = True
 
 class AppointmentCreateModel(BaseModel):
-    date_time: datetime
-    isBooked: bool
-    description: str
+    start_date_time: datetime
     physician_id: str
-    patient_id: str
 
     class Config:
         orm_mode = True
@@ -139,26 +153,26 @@ class AppointmentCreateModel(BaseModel):
                 "date_time": "2024-04-12T14:30:00",
                 "isBooked": True,
                 "description": "Quarterly check-up",
-                "physician_id": "1",
-                "patient_id": "1"
+                "physician_id": "clerk_id",
+                "patient_id": "clerk_id"
             }
         }
 
 # ----- Models for SummaryDocument ----- #
 class SummaryDocumentModel(BaseModel):
-    summaryDocId: int
-    appointment_id: int
+    summary_doc_id: str
+    appointment_id: str
 
     class Config:
         orm_mode = True
 
 class SummaryDocumentCreateModel(BaseModel):
-    appointment_id: int
+    appointment_id: str
 
     class Config:
         orm_mode = True
         schema_extra = {
             "example": {
-                "appointment_id": 1
+                "appointment_id": "A type uuid string for foreign key reference"
             }
         }
