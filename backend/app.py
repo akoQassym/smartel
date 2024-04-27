@@ -8,6 +8,7 @@ from fastapi import FastAPI, Query, Body
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
+from fastapi.middleware.cors import CORSMiddleware
 # from pandas import pd
 from typing import List, Optional
 import uuid
@@ -23,6 +24,15 @@ app = FastAPI(
     title = "Smartel API",
     description = "API for Smartel",
     docs_url = "/",
+)
+
+# Allow requests from all origins with appropriate methods and headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can specify specific origins instead of "*" for production
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
 )
 
 session = async_sessionmaker(
@@ -45,7 +55,7 @@ crud_summary_document = CRUD(SummaryDocument)
 async def root():
     return {"message": "Hello World"}
 
-
+# ------ APIS FOR USERS ------ #
 @app.post('/register', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel): 
     new_user = User(
@@ -107,8 +117,8 @@ async def edit_user(
 
     raise HTTPException(status_code=404, detail="No valid data provided or user not found")
 
-
-@app.post('/add_spec', status_code=HTTPStatus.CREATED)
+# ------ APIS FOR SPECIALIZATION ------ #
+@app.post('/add_specialization', status_code=HTTPStatus.CREATED)
 async def add_spec(spec_data: SpecializationCreateModel): 
     new_specialization = Specialization(
         description = spec_data.description,
@@ -118,15 +128,53 @@ async def add_spec(spec_data: SpecializationCreateModel):
     spec = await crud_specialization.create(new_specialization, session)
     return spec
 
-@app.post('/add_appointment/{physician_id}', status_code=HTTPStatus.CREATED)
-async def add_appointment(physician_id: str, app_data: AppointmentCreateModel): 
+@app.get('/get_specializations', status_code=HTTPStatus.OK)
+async def get_specializations():
+    specializations = await crud_specialization.get_all(session)
+    return specializations
+
+
+# ------ APIS FOR APPOINTMENTS ------ #
+@app.post('/add_appointment', status_code=HTTPStatus.CREATED)   
+async def add_appointment(appointment_data: AppointmentCreateModel): 
     new_appointment = Appointment(
-        physician_id = physician_id,
-        start_date_time = app_data.start_date_time,
+        physician_id = appointment_data.physician_id,
+        start_date_time = appointment_data.start_date_time,
     )
 
-    app = await crud_appointment.create(new_appointment, session)
-    return app
+    appointment = await crud_appointment.create(new_appointment, session)
+    return appointment
+
+@app.post('get_appointments/{physician_id}', status_code=HTTPStatus.OK)
+async def get_appointments(physician_id: str):
+    appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
+    return appointments
+
+@app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
+    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), session)
+    return updated_appointment
+
+@app.post('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def delete_appointment(appointment_id: str):
+    deleted = await crud_appointment.delete(appointment_id, session)
+    return {"message": "Appointment deleted successfully", "data": deleted}
+
+@app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
+async def book_appointment(appointment_id: str, patient_id: str):
+    # Fetch the current appointment details
+    appointment = await crud_appointment.get_one(appointment_id, session)
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    # Update the appointment attributes
+    update_data = {'isBooked': True, 'patient_id': patient_id}
+    updated_appointment = await crud_appointment.update(appointment_id, update_data, session)
+    
+    if not updated_appointment:
+        raise HTTPException(status_code=404, detail="Failed to update the appointment")
+    
+    return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
 '''
     done: create_user(user_id, email)
@@ -134,12 +182,12 @@ async def add_appointment(physician_id: str, app_data: AppointmentCreateModel):
     done: (implemented in a separate registration) add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
     done: edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
     done: edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-    delete_user(user_id)
-    get_specializations()
-    get_appointments(physician_id) // returns all available appointments for that specialization
-    add_appointment(date_time, phsyician_id, duration)
-    edit_appointment(appointment_id, date_time, duration)
-    delete_appointment(appointment_id)
-    book_appointment(appointment_id)
+    done: delete_user(user_id)
+    done: get_specializations()
+    done: get_appointments(physician_id) // returns all available appointments for that specialization
+    done: add_appointment(date_time, phsyician_id, duration)
+    done: edit_appointment(appointment_id, date_time, duration)
+    done: delete_appointment(appointment_id)
+    done: book_appointment(appointment_id)
     generate_document(audio_blob)
 '''
