@@ -31,7 +31,7 @@ class UserCreateModel(BaseModel):
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
-                "user_id": "The user id of the user; here it should be a Clerk_id",
+                "user_id": "0",
                 "first_name": "The first name of the user",
                 "last_name": "The last name of the user",
                 "email": "The email of the user",
@@ -52,7 +52,7 @@ class PatientModel(BaseModel):
     )
 
 class PatientCreateModel(BaseModel):
-    user_id: str
+    # user_id: str
     height: str
     weight: str
 
@@ -62,7 +62,6 @@ class PatientCreateModel(BaseModel):
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
-                "user_id": "The user id of the user; here it should be a Clerk_id",
                 "height": "The height of the patient",
                 "weight": "The weight of the patient",
             }
@@ -80,7 +79,7 @@ class PhysicianModel(BaseModel):
     )
 
 class PhysicianCreateModel(BaseModel):
-    user_id: str
+    # user_id: str
     specialization_id: int
 
     model_config = ConfigDict(
@@ -89,8 +88,7 @@ class PhysicianCreateModel(BaseModel):
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
-                "user_id": "The user id of the user; here it should be a Clerk_id",
-                "specialization_id": "The specialization id of the physician",
+                "specialization_id": "0",
             }
         }
     )

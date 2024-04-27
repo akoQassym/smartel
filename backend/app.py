@@ -30,7 +30,9 @@ session = async_sessionmaker(
     expire_on_commit = False,
 )
 
-# here use the CRUD class to interact with the database
+# here use the CRUD class to interact with the database initializing class takes
+# a good amount of time, so it is preferable to create a global instance to use
+# it throughout the application
 db = CRUD()
 
 @app.get("/")
@@ -57,9 +59,9 @@ async def create_user(user_data: UserCreateModel,
         if not patient_data:
             raise HTTPException(status_code=400, detail="Missing patient data")
         new_patient = Patient(
-            patient_data.user_id,
-            patient_data.height,
-            patient_data.weight,
+            user_id=user_data.user_id,
+            height=patient_data.height,
+            weight=patient_data.weight,
         )
         patient = await db.create_patient(new_patient, session)
         return {"user": user, "patient": patient}
@@ -69,9 +71,9 @@ async def create_user(user_data: UserCreateModel,
         if not physician_data:
             raise HTTPException(status_code=400, detail="Missing physician data")
         new_physician = Physician(
-            physician_data.user_id,
-            physician_data.height,
-            physician_data.weight,
+            user_id=user_data.user_id, 
+            height=physician_data.height, 
+            weight=physician_data.weight,
         )
         physician = await db.create_physician(new_physician, session)
         return {"user": user, "physician": physician}
@@ -79,3 +81,7 @@ async def create_user(user_data: UserCreateModel,
     else:
         raise HTTPException(status_code=400, detail="Invalid user type")
         # return user, physician # or patient or physician
+
+
+def spec_user(user_id, user_type):
+    pass
