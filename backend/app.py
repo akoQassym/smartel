@@ -142,7 +142,8 @@ async def add_appointment(appointment_data: AppointmentCreateModel):
 
 @app.post('get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
-    pass
+    appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
+    return appointments
 
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
