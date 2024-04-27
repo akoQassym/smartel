@@ -3,6 +3,7 @@
 # settings.
 
 # standard library
+from http.client import HTTPException
 from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
@@ -39,9 +40,9 @@ async def root():
 
 @app.post('/register', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel, 
-                      patient_data: PatientCreateModel, 
-                      physician_data: PhysicianCreateModel, 
-                      user_type: str = Query(None, description="Type parameter")):
+                      patient_data: PatientCreateModel = None, 
+                      physician_data: PhysicianCreateModel = None, 
+                      user_type: str = Query(..., description="Type parameter")):
     new_user = User(
         user_id = user_data.user_id,
         first_name = user_data.first_name,
@@ -53,19 +54,28 @@ async def create_user(user_data: UserCreateModel,
     user = await db.create_user(new_user, session)
 
     if user_type == 'patient':
+        if not patient_data:
+            raise HTTPException(status_code=400, detail="Missing patient data")
         new_patient = Patient(
             patient_data.user_id,
             patient_data.height,
             patient_data.weight,
         )
         patient = await db.create_patient(new_patient, session)
+        return {"user": user, "patient": patient}
+        # return user, patient
 
     elif user_type == 'physician':
+        if not physician_data:
+            raise HTTPException(status_code=400, detail="Missing physician data")
         new_physician = Physician(
             physician_data.user_id,
             physician_data.height,
             physician_data.weight,
         )
         physician = await db.create_physician(new_physician, session)
+        return {"user": user, "physician": physician}
 
-    return user # or patient or physician
+    else:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+        # return user, physician # or patient or physician
