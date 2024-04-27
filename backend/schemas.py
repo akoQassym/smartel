@@ -79,7 +79,7 @@ class PatientCreateModel(BaseModel):
 # ----- Models for Physician ----- #
 class PhysicianModel(BaseModel):
     user_id: str
-    specialization_id: int
+    specialization_id: str
     phone_number: str
     sex: str
     birth_date: datetime
@@ -90,7 +90,7 @@ class PhysicianModel(BaseModel):
     )
 
 class PhysicianCreateModel(BaseModel):
-    specialization_id: int
+    specialization_id: str
     phone_number: str
     sex: str
     birth_date: datetime
@@ -111,7 +111,7 @@ class PhysicianCreateModel(BaseModel):
 
 # ----- Models for Specialization ----- #
 class SpecializationModel(BaseModel):
-    specialization_id: int
+    specialization_id: str
     description: str
     name: str
 
