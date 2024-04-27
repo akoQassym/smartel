@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class UserModel(BaseModel):
-    user_id: int
+    user_id: str
     first_name: str
     last_name: str
     email: str
@@ -18,6 +18,7 @@ class UserModel(BaseModel):
     )
 
 class UserCreateModel(BaseModel):
+    user_id: str
     first_name: str
     last_name: str
     email: str
@@ -29,6 +30,7 @@ class UserCreateModel(BaseModel):
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
+                "user_id": "The user id of the user; here it should be a Clerk_id",
                 "first_name": "The first name of the user",
                 "last_name": "The last name of the user",
                 "email": "The email of the user",

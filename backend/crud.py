@@ -10,9 +10,9 @@ from sqlalchemy import select
 from models import User #, Patient, Physician, Specialization, Appointments, SummaryDocument
 
 class CRUD:
-    async def create_user(self, user_id: int, async_session: async_sessionmaker[AsyncSession]):
+    async def create_user(self, user: User, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            user = User(user_id = user_id)
+            # user = User(user_id = user_id)
             session.add(user)
             await session.commit()
 

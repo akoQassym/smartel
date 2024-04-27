@@ -17,14 +17,14 @@ class User(Base):
 
 class Patient(User):
     __tablename__ = 'patients'
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     height: Mapped[str] = mapped_column(nullable=False)
     weight: Mapped[str] = mapped_column(nullable=False)
     #__mapper_args__ = {'polymorphic_identity': 'patient'}
 
 class Physician(User):
     __tablename__ = 'physicians'
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     specialization_id: Mapped[int] = mapped_column(ForeignKey('specializations.specialization_id'))
 
     specialization: Mapped['Specialization'] = relationship('Specialization', back_populates='physicians')
@@ -45,8 +45,8 @@ class Appointment(Base):
     isBooked: Mapped[bool] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(Text)
 
-    physician_id: Mapped[int] = mapped_column(ForeignKey('physicians.user_id'))
-    patient_id: Mapped[int] = mapped_column(ForeignKey('patients.user_id'))
+    physician_id: Mapped[str] = mapped_column(ForeignKey('physicians.user_id'))
+    patient_id: Mapped[str] = mapped_column(ForeignKey('patients.user_id'))
 
     physician: Mapped['Physician'] = relationship('Physician', back_populates='appointments')
     patient: Mapped['Patient'] = relationship('Patient')
