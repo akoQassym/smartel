@@ -4,12 +4,12 @@
 
 # standard library
 from http.client import HTTPException
-from fastapi import FastAPI, Query, Depends
+from fastapi import FastAPI, Query, Body
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
 # from pandas import pd
-from typing import List
+from typing import List, Optional
 import uuid
 
 # local library
@@ -81,6 +81,28 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
     physician = await crud_physician.create(new_physician, session)
     return physician
 
+@app.post('/edit/{user_id}', status_code=HTTPStatus.OK)
+async def edit_user(
+    user_id: str, 
+    patient_data: Optional[PatientCreateModel] = Body(default=None),
+    physician_data: Optional[PhysicianCreateModel] = Body(default=None)
+):
+
+    # Check and update patient
+    if patient_data:
+        updated_patient = await crud_patient.update(user_id, patient_data.dict(exclude_unset=True), session)
+        if updated_patient:
+            return {"message": "Patient updated successfully", "data": updated_patient}
+    
+    # Check and update physician
+    if physician_data:
+        updated_physician = await crud_physician.update(user_id, physician_data.dict(exclude_unset=True), session)
+        if updated_physician:
+            return {"message": "Physician updated successfully", "data": updated_physician}
+
+    raise HTTPException(status_code=404, detail="No valid data provided or user not found")
+
+
 @app.post('/add_spec', status_code=HTTPStatus.CREATED)
 async def add_spec(spec_data: SpecializationCreateModel): 
     new_specialization = Specialization(
@@ -92,17 +114,17 @@ async def add_spec(spec_data: SpecializationCreateModel):
     return spec
 
 '''
-create_user(user_id, email)
-add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
-edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
-edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-delete_user(user_id)
-get_specializations()
-get_appointments(physician_id) // returns all available appointments for that specialization
-add_appointment(date_time, phsyician_id, duration)
-edit_appointment(appointment_id, date_time, duration)
-delete_appointment(appointment_id)
-book_appointment(appointment_id)
-generate_document(audio_blob)
+    done: create_user(user_id, email)
+    done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+    done: (implemented in a separate registration) add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
+    done: edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
+    done: edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+    delete_user(user_id)
+    get_specializations()
+    get_appointments(physician_id) // returns all available appointments for that specialization
+    add_appointment(date_time, phsyician_id, duration)
+    edit_appointment(appointment_id, date_time, duration)
+    delete_appointment(appointment_id)
+    book_appointment(appointment_id)
+    generate_document(audio_blob)
 '''
