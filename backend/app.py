@@ -91,6 +91,15 @@ async def add_spec(spec_data: SpecializationCreateModel):
     spec = await crud_specialization.create(new_specialization, session)
     return spec
 
+@app.post('/add_appointment/{user_id}', status_code=HTTPStatus.CREATED)
+async def add_appointment(app_data: AppointmentCreateModel): 
+    new_appointment = Appointment(
+        start_date_time = app_data.start_date_time,
+    )
+
+    app = await crud_appointment.create(new_appointment, session)
+    return app
+
 '''
 create_user(user_id, email)
 add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)

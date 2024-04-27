@@ -138,7 +138,6 @@ class AppointmentModel(BaseModel):
 
 class AppointmentCreateModel(BaseModel):
     start_date_time: datetime
-    physician_id: str
 
     class Config:
         orm_mode = True
