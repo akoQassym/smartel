@@ -27,13 +27,19 @@ app = FastAPI(
 
 session = async_sessionmaker(
     bind = engine,
-    expire_on_commit = False,
+    expire_on_commit = True,
 )
 
 # here use the CRUD class to interact with the database initializing class takes
 # a good amount of time, so it is preferable to create a global instance to use
 # it throughout the application
-db = CRUD()
+# crud_user = CRUD()
+crud_user = CRUD(User)
+crud_patient = CRUD(Patient)
+crud_physician = CRUD(Physician)
+crud_specialization = CRUD(Specialization)
+crud_appointment = CRUD(Appointment)
+crud_summary_document = CRUD(SummaryDocument)
 
 @app.get("/")
 async def root():
@@ -49,27 +55,28 @@ async def create_user(user_data: UserCreateModel):
         email = user_data.email,
     )
 
-    user = await db.create_user(new_user, session)
-
+    user = await crud_user.create(new_user, session)
     return user
 
-@app.post('/register/patient', status_code=HTTPStatus.CREATED)
-async def create_physician(patient_data: PatientCreateModel):
+@app.post('/register/patient/{user_id}', status_code=HTTPStatus.CREATED)
+async def create_patient(user_id: str, patient_data: PatientCreateModel):
     new_patient = Patient(
+        user_id = user_id,
         height = patient_data.height,
-        weight = patient_data.weight
+        weight = patient_data.weight,
+        phone_number = patient_data.phone_number,
     )
 
-    patient = await db.create_patient(new_patient, session)
-
+    patient = await crud_patient.create(new_patient, session)
     return patient
 
-@app.post('/register/physician', status_code=HTTPStatus.CREATED)
-async def create_physician(physician_data: PhysicianCreateModel):
+@app.post('/register/physician/{user_id}', status_code=HTTPStatus.CREATED)
+async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
     new_physician = Physician(
+        user_id = user_id,
         specialization_id = physician_data.specialization_id,
+        phone_number = physician_data.phone_number,
     )
 
-    physician = await db.create_physician(new_physician, session)
-
+    physician = await crud_physician.create(new_physician, session)
     return physician

@@ -14,7 +14,6 @@ class User(Base):
     first_name : Mapped[str] = mapped_column(nullable=False)
     last_name : Mapped[str] = mapped_column(nullable=False)
     email : Mapped[str] = mapped_column(nullable=False)
-    phone_number : Mapped[str] = mapped_column(nullable=False)
 
 class Patient(User):
     __tablename__ = 'patients'
@@ -22,6 +21,7 @@ class Patient(User):
     user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     height: Mapped[str] = mapped_column(nullable=False)
     weight: Mapped[str] = mapped_column(nullable=False)
+    phone_number : Mapped[str] = mapped_column(nullable=False)
     #__mapper_args__ = {'polymorphic_identity': 'patient'}
 
 class Physician(User):
@@ -29,7 +29,8 @@ class Physician(User):
 
     user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     specialization_id: Mapped[int] = mapped_column(ForeignKey('specializations.specialization_id'))
-
+    phone_number : Mapped[str] = mapped_column(nullable=False)
+    
     specialization: Mapped['Specialization'] = relationship('Specialization', back_populates='physicians')
     appointments: Mapped['Appointment'] = relationship('Appointment', back_populates='physician')
     #__mapper_args__ = {'polymorphic_identity': 'physician'}
@@ -62,7 +63,7 @@ class Appointment(Base):
 
 class SummaryDocument(Base):
     __tablename__ = 'summary_documents'
-    
+
     summaryDocId: Mapped[int] = mapped_column(primary_key=True)
     appointment_id: Mapped[int] = mapped_column(ForeignKey('appointments.appointment_id'))
 
