@@ -40,7 +40,7 @@ async def root():
 @app.post('/users', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel):
     new_user = User(
-        # user_id = user_data.user_id,
+        user_id = user_data.user_id,
         first_name = user_data.first_name,
         last_name = user_data.last_name,
         email = user_data.email,
