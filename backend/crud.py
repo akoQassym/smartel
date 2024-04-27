@@ -24,7 +24,7 @@ class CRUD:
 
     async def get_one(self, id, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(self.model).filter_by(id=id)
+            query = select(self.model).filter_by(user_id=id)
             result = await session.execute(query)
             try:
                 return result.scalar_one()
