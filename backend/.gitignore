@@ -9,6 +9,8 @@ logs
 .DS_Store
 .venv
 .env
+venv/
+.gitignore
 
 *.pyc
 *.local
