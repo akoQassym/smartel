@@ -47,19 +47,17 @@ class PatientModel(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        # orm_mode=True
+        orm_mode=True
     )
 
 class PatientCreateModel(BaseModel):
-    # user_id: str
     height: str
     weight: str
     phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
-        # orm_mode=True,
-        # shows up as the example in the swagger docs for Create Article
+        orm_mode=True,
         json_schema_extra={
             "example": {
                 "height": "The height of the patient",
@@ -77,18 +75,17 @@ class PhysicianModel(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        # orm_mode=True
+        orm_mode=True
     )
 
 class PhysicianCreateModel(BaseModel):
-    # user_id: str
     specialization_id: int
     phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
-        # orm_mode=True,
-        # shows up as the example in the swagger docs for Create Article
+        orm_mode=True,
+
         json_schema_extra={
             "example": {
                 "specialization_id": "0",
@@ -96,3 +93,72 @@ class PhysicianCreateModel(BaseModel):
             }
         }
     )
+
+# ----- Models for Specialization ----- #
+class SpecializationModel(BaseModel):
+    specialization_id: int
+    description: str
+
+    class Config:
+        orm_mode = True
+
+class SpecializationCreateModel(BaseModel):
+    description: str
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "description": "Cardiology"
+            }
+        }
+
+# ----- Models for Appointment ----- #
+class AppointmentModel(BaseModel):
+    appointment_id: int
+    date_time: datetime
+    isBooked: bool
+    description: str
+    physician_id: str
+    patient_id: str
+
+    class Config:
+        orm_mode = True
+
+class AppointmentCreateModel(BaseModel):
+    date_time: datetime
+    isBooked: bool
+    description: str
+    physician_id: str
+    patient_id: str
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "date_time": "2024-04-12T14:30:00",
+                "isBooked": True,
+                "description": "Quarterly check-up",
+                "physician_id": "1",
+                "patient_id": "1"
+            }
+        }
+
+# ----- Models for SummaryDocument ----- #
+class SummaryDocumentModel(BaseModel):
+    summaryDocId: int
+    appointment_id: int
+
+    class Config:
+        orm_mode = True
+
+class SummaryDocumentCreateModel(BaseModel):
+    appointment_id: int
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "appointment_id": 1
+            }
+        }

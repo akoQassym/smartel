@@ -58,3 +58,20 @@ async def create_user(user_data: UserCreateModel):
 
     user = await crud_user.create(new_user, session)
     return user
+
+
+'''
+create_user(user_id, email)
+add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
+edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
+edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
+delete_user(user_id)
+get_specializations()
+get_appointments(physician_id) // returns all available appointments for that specialization
+add_appointment(date_time, phsyician_id, duration)
+edit_appointment(appointment_id, date_time, duration)
+delete_appointment(appointment_id)
+book_appointment(appointment_id)
+generate_document(audio_blob)
+'''
