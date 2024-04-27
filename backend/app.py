@@ -3,7 +3,7 @@
 # settings.
 
 # standard library
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
@@ -14,7 +14,7 @@ import uuid
 # local library
 from crud import CRUD
 from base import engine
-from models import User #, Patient, Physician, Specialization, Appointments, SummaryDocument
+from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
 from schemas import UserCreateModel
 
 
@@ -37,8 +37,8 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.post('/users', status_code=HTTPStatus.CREATED)
-async def create_user(user_data: UserCreateModel):
+@app.post('/register/{user_type}', status_code=HTTPStatus.CREATED)
+async def create_user(user_data: UserCreateModel, user_type: str = Query(None, description="Type parameter")):
     new_user = User(
         user_id = user_data.user_id,
         first_name = user_data.first_name,
@@ -46,6 +46,9 @@ async def create_user(user_data: UserCreateModel):
         email = user_data.email,
         phone_number = user_data.phone_number,
     )
+
+    if user_type == 'patient':
+        new_patient = Pa
 
     user = await db.create_user(new_user, session)
 
