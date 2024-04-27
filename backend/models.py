@@ -18,6 +18,7 @@ class User(Base):
 
 class Patient(User):
     __tablename__ = 'patients'
+
     user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     height: Mapped[str] = mapped_column(nullable=False)
     weight: Mapped[str] = mapped_column(nullable=False)
@@ -25,6 +26,7 @@ class Patient(User):
 
 class Physician(User):
     __tablename__ = 'physicians'
+
     user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     specialization_id: Mapped[int] = mapped_column(ForeignKey('specializations.specialization_id'))
 
@@ -38,6 +40,7 @@ class Physician(User):
 
 class Specialization(Base):
     __tablename__ = 'specializations'
+
     specialization_id: Mapped[int] = mapped_column(primary_key=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -45,6 +48,7 @@ class Specialization(Base):
 
 class Appointment(Base):
     __tablename__ = 'appointments'
+
     appointment_id: Mapped[int] = mapped_column(primary_key=True)
     date_time: Mapped[datetime] = mapped_column(nullable=False)
     isBooked: Mapped[bool] = mapped_column(nullable=False)
@@ -58,6 +62,7 @@ class Appointment(Base):
 
 class SummaryDocument(Base):
     __tablename__ = 'summary_documents'
+    
     summaryDocId: Mapped[int] = mapped_column(primary_key=True)
     appointment_id: Mapped[int] = mapped_column(ForeignKey('appointments.appointment_id'))
 

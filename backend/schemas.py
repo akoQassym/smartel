@@ -15,7 +15,7 @@ class UserModel(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        orm_mode=True
+        # orm_mode=True
     )
 
 class UserCreateModel(BaseModel):
@@ -27,11 +27,11 @@ class UserCreateModel(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        orm_mode=True,
+        # orm_mode=True,
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
-                "user_id": "The user id of the user; here it should be a Clerk_id",
+                "user_id": "0",
                 "first_name": "The first name of the user",
                 "last_name": "The last name of the user",
                 "email": "The email of the user",
@@ -48,17 +48,17 @@ class PatientModel(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        orm_mode=True
+        # orm_mode=True
     )
 
 class PatientCreateModel(BaseModel):
-    #user_id: str
+    # user_id: str
     height: str
     weight: str
 
     model_config = ConfigDict(
         from_attributes=True,
-        orm_mode=True,
+        # orm_mode=True,
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
@@ -70,25 +70,25 @@ class PatientCreateModel(BaseModel):
 
 # ----- Models for Physician ----- #
 class PhysicianModel(BaseModel):
-    #user_id: str
+    user_id: str
     specialization_id: int
 
     model_config = ConfigDict(
         from_attributes=True,
-        orm_mode=True
+        # orm_mode=True
     )
 
 class PhysicianCreateModel(BaseModel):
-    #user_id: str
+    # user_id: str
     specialization_id: int
 
     model_config = ConfigDict(
         from_attributes=True,
-        orm_mode=True,
+        # orm_mode=True,
         # shows up as the example in the swagger docs for Create Article
         json_schema_extra={
             "example": {
-                "specialization_id": "1",
+                "specialization_id": "0",
             }
         }
     )
