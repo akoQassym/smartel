@@ -4,7 +4,7 @@
 
 # standard library
 from http.client import HTTPException
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Depends
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
@@ -26,9 +26,9 @@ app = FastAPI(
 )
 
 session = async_sessionmaker(
-    bind = engine,
-    expire_on_commit = False,
-)
+        bind = engine,
+        expire_on_commit = False,
+    )
 
 # here use the CRUD class to interact with the database initializing class takes
 # a good amount of time, so it is preferable to create a global instance to use
@@ -47,7 +47,7 @@ async def root():
 
 
 @app.post('/register', status_code=HTTPStatus.CREATED)
-async def create_user(user_data: UserCreateModel):
+async def create_user(user_data: UserCreateModel): 
     new_user = User(
         user_id = user_data.user_id,
         first_name = user_data.first_name,
@@ -59,6 +59,28 @@ async def create_user(user_data: UserCreateModel):
     user = await crud_user.create(new_user, session)
     return user
 
+@app.post('/register/patient/{user_id}', status_code=HTTPStatus.CREATED)
+async def create_patient(user_id: str, patient_data: PatientCreateModel):
+    new_patient = Patient(
+        user_id = user_id,
+        height = patient_data.height,
+        weight = patient_data.weight,
+        phone_number = patient_data.phone_number,
+    )
+
+    patient = await crud_patient.create(new_patient, session)
+    return patient
+
+@app.post('/register/physician/{user_id}', status_code=HTTPStatus.CREATED)
+async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
+    new_physician = Physician(
+        user_id = user_id,
+        specialization_id = physician_data.specialization_id,
+        phone_number = physician_data.phone_number,
+    )
+
+    physician = await crud_physician.create(new_physician, session)
+    return physician
 
 '''
 create_user(user_id, email)
