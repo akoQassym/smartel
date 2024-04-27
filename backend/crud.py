@@ -44,7 +44,7 @@ class CRUD:
 
     async def update(self, id, update_data, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(self.model).filter_by(id=id)
+            query = select(self.model).filter_by(user_id=id)
             result = await session.execute(query)
             try:
                 instance = result.scalar_one()

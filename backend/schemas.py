@@ -70,7 +70,7 @@ class PatientCreateModel(BaseModel):
                 "weight": "The weight of the patient",
                 "phone_number": "The phone number of the user",
                 "sex": "Can be male, female, or other",
-                "birth_date": "The birth date of the user",
+                "birth_date": "2024-04-12T14:30:00",
                 "blood_type": "The blood type of the patient"
             }
         }
@@ -104,7 +104,7 @@ class PhysicianCreateModel(BaseModel):
                 "specialization_id": "0",
                 "phone_number": "The phone number of the user",
                 "sex": "Can be male, female, or other",
-                "birth_date": "The birth date of the user"
+                "birth_date": "2024-04-12T14:30:00"
             }
         }
     )
@@ -144,7 +144,6 @@ class AppointmentModel(BaseModel):
 
 class AppointmentCreateModel(BaseModel):
     start_date_time: datetime
-    physician_id: str
 
     class Config:
         orm_mode = True
