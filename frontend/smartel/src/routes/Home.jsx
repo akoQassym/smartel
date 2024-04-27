@@ -1,9 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { SignIn, useUser } from "@clerk/clerk-react";
+import { SignIn, useUser, useSession } from "@clerk/clerk-react";
 import RouteButton from "../components/RouteButton";
+import { checkUserRole } from "../utils/checkUserRole";
+
+const BUTTONS = [{ link: "/dashboard", text: "Patient Portal" }];
 
 function Home() {
   const { isSignedIn } = useUser();
+  const { isLoaded, session } = useSession();
+
+  const [buttons, setButtons] = useState([...BUTTONS]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      const userRole = checkUserRole(session);
+      console.log(userRole);
+      if (userRole === "org:admin" || userRole === "org:physician") {
+        setButtons((prevButtons) => [
+          ...BUTTONS,
+          { link: "/physicianDashboard", text: "Physician Portal" },
+        ]);
+      }
+    }
+  }, [isLoaded, session]);
 
   return (
     <>
@@ -19,14 +38,15 @@ function Home() {
           {isSignedIn ? (
             <>
               <div className="flex justify-center">
-                <RouteButton
-                  routeLink={"/dashboard"}
-                  buttonText={"Patient Portal"}
-                />
-                <RouteButton
-                  routeLink={"/physicianDashboard"}
-                  buttonText={"Physician Portal"}
-                />
+                {buttons.map((b) => {
+                  return (
+                    <RouteButton
+                      routeLink={b.link}
+                      buttonText={b.text}
+                      key={b.link}
+                    />
+                  );
+                })}
               </div>
             </>
           ) : (
