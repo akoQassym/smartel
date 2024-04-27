@@ -33,7 +33,13 @@ session = async_sessionmaker(
 # here use the CRUD class to interact with the database initializing class takes
 # a good amount of time, so it is preferable to create a global instance to use
 # it throughout the application
-db = CRUD()
+# db = CRUD()
+crud_user = CRUD(User)`
+crud_patient = CRUD(Patient)
+crud_physician = CRUD(Physician)
+crud_specialization = CRUD(Specialization)
+crud_appointment = CRUD(Appointment)
+crud_summary_document = CRUD(SummaryDocument)`
 
 @app.get("/")
 async def root():
