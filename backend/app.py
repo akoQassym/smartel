@@ -142,19 +142,34 @@ async def add_appointment(appointment_data: AppointmentCreateModel):
 
 @app.post('get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
-    pass
+    appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
+    return appointments
 
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
-    pass
+    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), session)
+    return updated_appointment
 
 @app.post('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
-    pass
+    deleted = await crud_appointment.delete(appointment_id, session)
+    return {"message": "Appointment deleted successfully", "data": deleted}
 
-@app.post('/book_appointment/{appointment_id}', status_code=HTTPStatus.OK)
-async def book_appointment(appointment_id: str):
-    pass
+@app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
+async def book_appointment(appointment_id: str, patient_id: str):
+    # Fetch the current appointment details
+    appointment = await crud_appointment.get_one(appointment_id, session)
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    # Update the appointment attributes
+    update_data = {'isBooked': True, 'patient_id': patient_id}
+    updated_appointment = await crud_appointment.update(appointment_id, update_data, session)
+    
+    if not updated_appointment:
+        raise HTTPException(status_code=404, detail="Failed to update the appointment")
+    
+    return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
 '''
     done: create_user(user_id, email)
@@ -162,12 +177,12 @@ async def book_appointment(appointment_id: str):
     done: (implemented in a separate registration) add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
     done: edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
     done: edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-    delete_user(user_id)
-    get_specializations()
-    get_appointments(physician_id) // returns all available appointments for that specialization
-    add_appointment(date_time, phsyician_id, duration)
-    edit_appointment(appointment_id, date_time, duration)
-    delete_appointment(appointment_id)
-    book_appointment(appointment_id)
+    done: delete_user(user_id)
+    done: get_specializations()
+    done: get_appointments(physician_id) // returns all available appointments for that specialization
+    done: add_appointment(date_time, phsyician_id, duration)
+    done: edit_appointment(appointment_id, date_time, duration)
+    done: delete_appointment(appointment_id)
+    done: book_appointment(appointment_id)
     generate_document(audio_blob)
 '''
