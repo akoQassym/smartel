@@ -11,7 +11,6 @@ class UserModel(BaseModel):
     last_name: str
     email: str
     phone_number: str
-    password: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -23,7 +22,6 @@ class UserCreateModel(BaseModel):
     last_name: str
     email: str
     phone_number: str
-    password: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -35,7 +33,6 @@ class UserCreateModel(BaseModel):
                 "last_name": "The last name of the user",
                 "email": "The email of the user",
                 "phone_number": "The phone number of the user",
-                "password": "The password of the user"
             }
         }
     )

@@ -45,7 +45,6 @@ async def create_user(user_data: UserCreateModel):
         last_name = user_data.last_name,
         email = user_data.email,
         phone_number = user_data.phone_number,
-        password = user_data.password
     )
 
     user = await db.create_user(new_user, session)

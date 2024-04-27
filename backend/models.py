@@ -34,16 +34,16 @@ class Physician(User):
 class Specialization(Base):
     __tablename__ = 'specializations'
     specialization_id: Mapped[int] = mapped_column(primary_key=True)
-    description: Mapped[Text] = mapped_column(nullable=False, length=50)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
 
     physicians: Mapped['Physician'] = relationship('Physician', back_populates='specialization')
 
 class Appointment(Base):
     __tablename__ = 'appointments'
     appointment_id: Mapped[int] = mapped_column(primary_key=True)
-    date_time: Mapped[DateTime] = mapped_column(nullable=False)
+    date_time: Mapped[datetime] = mapped_column(nullable=False)
     isBooked: Mapped[bool] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column()
+    description: Mapped[str] = mapped_column(Text)
 
     physician_id: Mapped[int] = mapped_column(ForeignKey('physicians.user_id'))
     patient_id: Mapped[int] = mapped_column(ForeignKey('patients.user_id'))
