@@ -1,5 +1,6 @@
 # Define your database models here. This keeps your database schema separate
 # from your business logic, which is generally a good practice.
+# You basically define your tables here
 
 from base import Base
 from sqlalchemy.orm import Mapped, mapped_column
