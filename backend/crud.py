@@ -7,9 +7,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from sqlalchemy import select
 
 # import functions
-from models import User #, Patient, Physician, Specialization, Appointments, SummaryDocument
+from models import User, Patient, Physician #, Specialization, Appointments, SummaryDocument
 
 class CRUD:
+    # ----- CRUD for User ----- #
     async def create_user(self, user: User, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
             # user = User(user_id = user_id)
@@ -18,9 +19,19 @@ class CRUD:
 
             await session.refresh(user)
             return user
-        # pass 
-        # async with async_sessionmaker() as session:
-        #     user = User(user_id = user_id)
-        #     session.add(user)
-        #     await session.commit()
-        #     return user
+
+    # ----- CRUD for Patients ----- #
+    async def create_patient(self, patient: Patient, async_session: async_sessionmaker[AsyncSession]):
+        async with async_session() as session:
+            session.add(patient)
+            await session.commit()
+            await session.refresh(patient)
+            return patient
+        
+    # ----- CRUD for Physician ----- #
+    async def create_physician(self, physician: Physician, async_session: async_sessionmaker[AsyncSession]):
+        async with async_session() as session:
+            session.add(physician)
+            await session.commit()
+            await session.refresh(physician)
+            return physician
