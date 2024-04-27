@@ -32,6 +32,10 @@ class Physician(User):
     appointments: Mapped['Appointment'] = relationship('Appointment', back_populates='physician')
     #__mapper_args__ = {'polymorphic_identity': 'physician'}
 
+    # This function tells SQLAlchemy how two tables are related to each other,
+    # which is essential for generating SQL for queries that span multiple
+    # tables without having to manually write the joins.
+
 class Specialization(Base):
     __tablename__ = 'specializations'
     specialization_id: Mapped[int] = mapped_column(primary_key=True)

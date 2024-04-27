@@ -15,7 +15,7 @@ import uuid
 from crud import CRUD
 from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
-from schemas import UserCreateModel
+from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel #, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
 
 app = FastAPI(
@@ -37,8 +37,11 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.post('/register/{user_type}', status_code=HTTPStatus.CREATED)
-async def create_user(user_data: UserCreateModel, user_type: str = Query(None, description="Type parameter")):
+@app.post('/register', status_code=HTTPStatus.CREATED)
+async def create_user(user_data: UserCreateModel, 
+                      patient_data: PatientCreateModel, 
+                      physician_data: PhysicianCreateModel, 
+                      user_type: str = Query(None, description="Type parameter")):
     new_user = User(
         user_id = user_data.user_id,
         first_name = user_data.first_name,
@@ -47,9 +50,22 @@ async def create_user(user_data: UserCreateModel, user_type: str = Query(None, d
         phone_number = user_data.phone_number,
     )
 
-    if user_type == 'patient':
-        new_patient = Pa
-
     user = await db.create_user(new_user, session)
 
-    return user
+    if user_type == 'patient':
+        new_patient = Patient(
+            patient_data.user_id,
+            patient_data.height,
+            patient_data.weight,
+        )
+        patient = await db.create_patient(new_patient, session)
+
+    elif user_type == 'physician':
+        new_physician = Physician(
+            physician_data.user_id,
+            physician_data.height,
+            physician_data.weight,
+        )
+        physician = await db.create_physician(new_physician, session)
+
+    return user # or patient or physician
