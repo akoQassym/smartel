@@ -14,7 +14,6 @@ class User(Base):
     last_name : Mapped[str] = mapped_column(nullable=False)
     email : Mapped[str] = mapped_column(nullable=False)
     phone_number : Mapped[str] = mapped_column(nullable=False)
-    password : Mapped[str] = mapped_column(nullable=False)
 
 class Patient(User):
     __tablename__ = 'patients'
