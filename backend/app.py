@@ -16,7 +16,7 @@ import uuid
 from crud import CRUD
 from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
-from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel #, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
+from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
 
 app = FastAPI(
@@ -80,6 +80,16 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
 
     physician = await crud_physician.create(new_physician, session)
     return physician
+
+@app.post('/add_spec', status_code=HTTPStatus.CREATED)
+async def add_spec(spec_data: SpecializationCreateModel): 
+    new_specialization = Specialization(
+        description = spec_data.description,
+        name = spec_data.name,
+    )
+
+    spec = await crud_specialization.create(new_specialization, session)
+    return spec
 
 '''
 create_user(user_id, email)

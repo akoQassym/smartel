@@ -15,11 +15,12 @@ class CRUD:
         self.model = model
         self.model_name = model.__name__.lower()
 
-    async def create(self, instance_data, session: AsyncSession):
-        session.add(instance_data)
-        await session.commit()
-        await session.refresh(instance_data)
-        return instance_data
+    async def create(self, instance_data, async_session: async_sessionmaker[AsyncSession]):
+        async with async_session() as session:
+            session.add(instance_data)
+            await session.commit()
+            await session.refresh(instance_data)
+            return instance_data
 
     async def get_one(self, id, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
