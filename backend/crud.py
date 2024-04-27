@@ -17,7 +17,7 @@ class CRUD:
             session.add(user)
             await session.commit()
 
-            await session.refresh(user)
+            #await session.refresh(user)
             return user
 
     # ----- CRUD for Patients ----- #

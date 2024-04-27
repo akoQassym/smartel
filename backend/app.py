@@ -57,11 +57,11 @@ async def create_user(user_data: UserCreateModel,
         if not patient_data:
             raise HTTPException(status_code=400, detail="Missing patient data")
         new_patient = Patient(
-            patient_data.user_id,
-            patient_data.height,
-            patient_data.weight,
+            height = patient_data.height,
+            weight = patient_data.weight,
         )
         patient = await db.create_patient(new_patient, session)
+        print("--return results")
         return {"user": user, "patient": patient}
         # return user, patient
 
@@ -69,9 +69,8 @@ async def create_user(user_data: UserCreateModel,
         if not physician_data:
             raise HTTPException(status_code=400, detail="Missing physician data")
         new_physician = Physician(
-            physician_data.user_id,
-            physician_data.height,
-            physician_data.weight,
+            user_id = physician_data.user_id,
+            specialization_id = physician_data.specialization_id,
         )
         physician = await db.create_physician(new_physician, session)
         return {"user": user, "physician": physician}
@@ -79,3 +78,4 @@ async def create_user(user_data: UserCreateModel,
     else:
         raise HTTPException(status_code=400, detail="Invalid user type")
         # return user, physician # or patient or physician
+    return {"user": user}
