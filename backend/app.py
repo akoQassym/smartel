@@ -15,7 +15,7 @@ import uuid
 from crud import CRUD
 from base import engine
 from models import User #, Patient, Physician, Specialization, Appointments, SummaryDocument
-
+from schemas import UserCreateModel
 
 
 app = FastAPI(
@@ -35,3 +35,19 @@ db = CRUD()
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.post('/users', status_code=HTTPStatus.CREATED)
+async def create_user(user_data: UserCreateModel):
+    new_user = User(
+        user_id = user_data.user_id,
+        first_name = user_data.first_name,
+        last_name = user_data.last_name,
+        email = user_data.email,
+        phone_number = user_data.phone_number,
+        password = user_data.password
+    )
+
+    user = await db.create_user(new_user, session)
+
+    return user

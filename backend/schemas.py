@@ -2,5 +2,40 @@
 # in validating and structuring the input and output data for your API
 # endpoints.
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+
+class UserModel(BaseModel):
+    user_id: int
+    first_name: str
+    last_name: str
+    email: str
+    phone_number: str
+    password: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        # orm_mode=True
+    )
+
+class UserCreateModel(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    phone_number: str
+    password: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        # orm_mode=True,
+        # shows up as the example in the swagger docs for Create Article
+        json_schema_extra={
+            "example": {
+                "first_name": "The first name of the user",
+                "last_name": "The last name of the user",
+                "email": "The email of the user",
+                "phone_number": "The phone number of the user",
+                "password": "The password of the user"
+            }
+        }
+    )

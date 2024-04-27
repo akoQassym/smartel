@@ -11,7 +11,14 @@ from models import User #, Patient, Physician, Specialization, Appointments, Sum
 
 class CRUD:
     async def create_user(self, user_id: int, async_session: async_sessionmaker[AsyncSession]):
-        pass 
+        async with async_session() as session:
+            user = User(user_id = user_id)
+            session.add(user)
+            await session.commit()
+
+            await session.refresh(user)
+            return user
+        # pass 
         # async with async_sessionmaker() as session:
         #     user = User(user_id = user_id)
         #     session.add(user)
