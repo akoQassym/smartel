@@ -24,7 +24,7 @@ class Patient(Base):
     height: Mapped[str] = mapped_column(nullable=False)
     weight: Mapped[str] = mapped_column(nullable=False)
     phone_number : Mapped[str] = mapped_column(nullable=False)
-    birth_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    birth_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     sex: Mapped[str] = mapped_column(nullable=False)
     blood_type: Mapped[str] = mapped_column(nullable=False)
     #__mapper_args__ = {'polymorphic_identity': 'patient'}
@@ -35,7 +35,7 @@ class Physician(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey('users.user_id'), primary_key=True)
     specialization_id: Mapped[int] = mapped_column(ForeignKey('specializations.specialization_id'))
     phone_number : Mapped[str] = mapped_column(nullable=False)
-    birth_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    birth_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     sex: Mapped[str] = mapped_column(nullable=False)
 
     specialization: Mapped['Specialization'] = relationship('Specialization', back_populates='physicians')
@@ -59,7 +59,7 @@ class Appointment(Base):
     __tablename__ = 'appointments'
 
     appointment_id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    start_date_time: Mapped[datetime] = mapped_column(nullable=False)
+    start_date_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     isBooked: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     physician_id: Mapped[str] = mapped_column(ForeignKey('physicians.user_id'), nullable=False)

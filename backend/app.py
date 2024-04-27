@@ -65,6 +65,9 @@ async def create_patient(user_id: str, patient_data: PatientCreateModel):
         height = patient_data.height,
         weight = patient_data.weight,
         phone_number = patient_data.phone_number,
+        sex = patient_data.sex,
+        birth_date = patient_data.birth_date,
+        blood_type = patient_data.blood_type,
     )
 
     patient = await crud_patient.create(new_patient, session)
@@ -76,6 +79,8 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
         user_id = user_id,
         specialization_id = physician_data.specialization_id,
         phone_number = physician_data.phone_number,
+        sex = physician_data.sex,
+        birth_date = physician_data.birth_date,
     )
 
     physician = await crud_physician.create(new_physician, session)
@@ -113,9 +118,10 @@ async def add_spec(spec_data: SpecializationCreateModel):
     spec = await crud_specialization.create(new_specialization, session)
     return spec
 
-@app.post('/add_appointment/{user_id}', status_code=HTTPStatus.CREATED)
-async def add_appointment(app_data: AppointmentCreateModel): 
+@app.post('/add_appointment/{physician_id}', status_code=HTTPStatus.CREATED)
+async def add_appointment(physician_id: str, app_data: AppointmentCreateModel): 
     new_appointment = Appointment(
+        physician_id = physician_id,
         start_date_time = app_data.start_date_time,
     )
 
