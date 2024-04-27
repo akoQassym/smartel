@@ -62,7 +62,7 @@ class Appointment(Base):
     start_date_time: Mapped[datetime] = mapped_column(nullable=False)
     isBooked: Mapped[bool] = mapped_column(nullable=False, default=False)
 
-    physician_id: Mapped[str] = mapped_column(ForeignKey('physicians.user_id'))
+    physician_id: Mapped[str] = mapped_column(ForeignKey('physicians.user_id'), nullable=False)
     patient_id: Mapped[str] = mapped_column(ForeignKey('patients.user_id'), nullable=True)
 
     physician: Mapped['Physician'] = relationship('Physician', back_populates='appointments')
@@ -71,7 +71,7 @@ class Appointment(Base):
 class SummaryDocument(Base):
     __tablename__ = 'summary_documents'
 
-    summaryDocId: Mapped[int] = mapped_column(primary_key=True)
-    appointment_id: Mapped[int] = mapped_column(ForeignKey('appointments.appointment_id'))
+    summary_doc_id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    appointment_id: Mapped[str] = mapped_column(ForeignKey('appointments.appointment_id'))
 
     appointment: Mapped['Appointment'] = relationship('Appointment')
