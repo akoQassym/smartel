@@ -25,31 +25,7 @@ function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataToRegister = {
-      "user_id": user.id,
-      "first_name": user.firstName,
-      "last_name": user.lastName,
-      "email": user.primaryEmailAddress.emailAddress,
-    };
-    console.log(dataToRegister);
-    try {
-      const res = await fetch("http://127.0.0.1:8000/register", {
-        method: "POST", // Specify the HTTP method
-        headers: {
-          "Content-Type": "application/json", // Specify content type as JSON
-        },
-        body: JSON.stringify(dataToRegister), // Convert data to JSON string
-      });
-      if (!res.ok) {
-        console.log(res);
-        throw new Error("Failed to register user");
-      }
-
-      const responseData = await res.json(); // Parse response JSON
-      console.log("User registered successfully:", responseData);
-    } catch (error) {
-      console.error("Error registering user:", error);
-    }
+    console.log("Submitting");
 
     // const dataForPatient = {
 
