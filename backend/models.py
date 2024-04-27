@@ -1,7 +1,7 @@
 # Define your database models here. This keeps your database schema separate
 # from your business logic, which is generally a good practice.
 
-from base import Base
+from base import Base, engine
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Text
 from datetime import datetime
