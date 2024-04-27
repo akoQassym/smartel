@@ -8,6 +8,7 @@ from fastapi import FastAPI, Query, Body
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
+from fastapi.middleware.cors import CORSMiddleware
 # from pandas import pd
 from typing import List, Optional
 import uuid
@@ -23,6 +24,15 @@ app = FastAPI(
     title = "Smartel API",
     description = "API for Smartel",
     docs_url = "/",
+)
+
+# Allow requests from all origins with appropriate methods and headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can specify specific origins instead of "*" for production
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
 )
 
 session = async_sessionmaker(
