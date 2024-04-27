@@ -177,12 +177,12 @@ async def book_appointment(appointment_id: str, patient_id: str):
     done: (implemented in a separate registration) add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
     done: edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
     done: edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-    delete_user(user_id)
-    get_specializations()
-    get_appointments(physician_id) // returns all available appointments for that specialization
-    add_appointment(date_time, phsyician_id, duration)
-    edit_appointment(appointment_id, date_time, duration)
-    delete_appointment(appointment_id)
-    book_appointment(appointment_id)
+    done: delete_user(user_id)
+    done: get_specializations()
+    done: get_appointments(physician_id) // returns all available appointments for that specialization
+    done: add_appointment(date_time, phsyician_id, duration)
+    done: edit_appointment(appointment_id, date_time, duration)
+    done: delete_appointment(appointment_id)
+    done: book_appointment(appointment_id)
     generate_document(audio_blob)
 '''
