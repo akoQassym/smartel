@@ -63,6 +63,7 @@ class CRUD:
                 return False
 
 '''
+Use case:
     crud_user = CRUD(User)
     crud_patient = CRUD(Patient)
     crud_physician = CRUD(Physician)

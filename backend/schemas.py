@@ -11,7 +11,7 @@ class UserModel(BaseModel):
     first_name: str
     last_name: str
     email: str
-    phone_number: str
+    # phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -23,7 +23,6 @@ class UserCreateModel(BaseModel):
     first_name: str
     last_name: str
     email: str
-    phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -34,8 +33,7 @@ class UserCreateModel(BaseModel):
                 "user_id": "0",
                 "first_name": "The first name of the user",
                 "last_name": "The last name of the user",
-                "email": "The email of the user",
-                "phone_number": "The phone number of the user",
+                "email": "The email of the user"
             }
         }
     )
@@ -45,6 +43,7 @@ class PatientModel(BaseModel):
     user_id: str
     height: str
     weight: str
+    phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -55,6 +54,7 @@ class PatientCreateModel(BaseModel):
     # user_id: str
     height: str
     weight: str
+    phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -64,6 +64,7 @@ class PatientCreateModel(BaseModel):
             "example": {
                 "height": "The height of the patient",
                 "weight": "The weight of the patient",
+                "phone_number": "The phone number of the user"
             }
         }
     )
@@ -72,6 +73,7 @@ class PatientCreateModel(BaseModel):
 class PhysicianModel(BaseModel):
     user_id: str
     specialization_id: int
+    phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -81,6 +83,7 @@ class PhysicianModel(BaseModel):
 class PhysicianCreateModel(BaseModel):
     # user_id: str
     specialization_id: int
+    phone_number: str
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -89,6 +92,7 @@ class PhysicianCreateModel(BaseModel):
         json_schema_extra={
             "example": {
                 "specialization_id": "0",
+                "phone_number": "The phone number of the user"
             }
         }
     )
