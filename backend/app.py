@@ -262,8 +262,7 @@ async def load_transcriptions(directory_path: str):
                 break
             
             # create a dummy string for the appointment_id
-            appointment_id = "appointment_id_" + str(counter)
-            appointment_id = str(uuid.uuid4())
+            appointment_id = "457d2963-2f8c-4551-bacd-ca9d7a2b954a"
             # Read the content of each file
             with open(file_path, 'r', encoding='utf-8') as file:
                 transcription = file.read()
