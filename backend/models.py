@@ -73,5 +73,7 @@ class SummaryDocument(Base):
 
     summary_doc_id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     appointment_id: Mapped[str] = mapped_column(ForeignKey('appointments.appointment_id'))
+    transcription: Mapped[str] = mapped_column(Text, nullable=True, default=None)
+    markdown_summary: Mapped[str] = mapped_column(Text, nullable=True, default=None)
 
     appointment: Mapped['Appointment'] = relationship('Appointment')

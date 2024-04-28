@@ -1,0 +1,10 @@
+# Logs
+logs
+*.log
+
+# Editor directories and files
+__pycache__
+.DS_Store
+
+# file types
+*.zip

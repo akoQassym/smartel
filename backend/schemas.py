@@ -161,17 +161,23 @@ class AppointmentCreateModel(BaseModel):
 class SummaryDocumentModel(BaseModel):
     summary_doc_id: str
     appointment_id: str
+    transcription: str
+    markdown_summary: str
 
     class Config:
         orm_mode = True
 
 class SummaryDocumentCreateModel(BaseModel):
     appointment_id: str
+    transcription: str
+    markdown_summary: str
 
     class Config:
         orm_mode = True
         schema_extra = {
             "example": {
-                "appointment_id": "A type uuid string for foreign key reference"
+                "appointment_id": "A type uuid string for foreign key reference",
+                "transcription": "The transcription of the appointment",
+                "markdown_summary": "The markdown summary of the appointment"
             }
         }
