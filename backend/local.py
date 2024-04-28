@@ -59,19 +59,48 @@ crud_appointment = CRUD(Appointment)
 crud_summary_document = CRUD(SummaryDocument)
 
 
-'''
-    done: create_user(user_id, email)
-    done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-    done: (implemented in a separate registration) add_physician_detail(user_id, first_name, last_name, age, sex, specialization_id)
-    done: edit_physician(user_id, first_name, last_name, age, sex, specialization_id, type)
-    done: edit_patient(user_id, first_name, last_name, age, sex, weight, height, blood_type)
-    done: delete_user(user_id)
-    done: get_specializations()
-    done: get_appointments(physician_id) // returns all available appointments for that specialization
-    done: add_appointment(date_time, phsyician_id, duration)
-    done: edit_appointment(appointment_id, date_time, duration)
-    done: delete_appointment(appointment_id)
-    done: book_appointment(appointment_id)
-    transcribe_audio(audio_blob)
-    summarize_transcription(document_id)
-'''
+# ------ APIS FOR LOCAL USE ------ #
+async def load_transcriptions(directory_path: str):
+    print("Function called")
+    # Path object for the directory
+    from pathlib import Path
+
+    path = Path(directory_path)
+
+    print(f"Loading transcriptions from {path}")
+
+    counter = 0
+    if not path.exists():
+        print(f"Directory {path} does not exist")
+        return
+    
+    try:
+        # Iterate over text files in the directory
+        for file_path in path.glob('*.txt'):  # Adjust the pattern if necessary
+            counter += 1
+            if counter > 10:
+                break
+            
+            # create a dummy string for the appointment_id
+            appointment_id = "457d2963-2f8c-4551-bacd-ca9d7a2b954a"
+            # Read the content of each file
+            with open(file_path, 'r', encoding='utf-8') as file:
+                transcription = file.read()
+
+            # Create an instance of SummaryDocument
+            summary_document = SummaryDocument(
+                transcription = transcription,
+                appointment_id = appointment_id  # This needs to be obtained or set appropriately
+            )
+
+            print(f"Appointment ID: {summary_document.appointment_id} is loaded into the database")
+
+            # Use the CRUD class to save the transcription to the database
+            await crud_summary_document.create(summary_document, session)
+
+            print("Transcription loaded successfully")
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+asyncio.run(load_transcriptions('./data/clean_transcript/'))

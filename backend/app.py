@@ -239,53 +239,6 @@ async def summarize_transcription(document_id: str):
         raise HTTPException(status_code=error.response.status_code, detail="Failed to generate summary")
 
 
-# ------ APIS FOR LOCAL USE ------ #
-async def load_transcriptions(directory_path: str):
-    print("Function called")
-    # Path object for the directory
-    from pathlib import Path
-
-    path = Path(directory_path)
-
-    print(f"Loading transcriptions from {path}")
-
-    counter = 0
-    if not path.exists():
-        print(f"Directory {path} does not exist")
-        return
-    
-    try:
-        # Iterate over text files in the directory
-        for file_path in path.glob('*.txt'):  # Adjust the pattern if necessary
-            counter += 1
-            if counter > 10:
-                break
-            
-            # create a dummy string for the appointment_id
-            appointment_id = "457d2963-2f8c-4551-bacd-ca9d7a2b954a"
-            # Read the content of each file
-            with open(file_path, 'r', encoding='utf-8') as file:
-                transcription = file.read()
-
-            # Create an instance of SummaryDocument
-            summary_document = SummaryDocument(
-                transcription = transcription,
-                appointment_id = appointment_id  # This needs to be obtained or set appropriately
-            )
-
-            print(f"Appointment ID: {summary_document.appointment_id} is loaded into the database")
-
-            # Use the CRUD class to save the transcription to the database
-            await crud_summary_document.create(summary_document, session)
-
-            print("Transcription loaded successfully")
-    
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-asyncio.run(load_transcriptions('./data/clean_transcript/'))
-
-
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
