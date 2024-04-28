@@ -78,12 +78,14 @@ async def create_user(user_data: UserCreateModel):
 
 @app.get('/user/{user_id}', status_code=HTTPStatus.OK)
 async def get_user(user_id: str):
-    res = await crud_user.get_one(user_id, session)
+    # res = await crud_user.get_one(user_id, session)
+    res = await crud_user.get_one(session, filter = {"user_id": user_id})
     return res
 
 @app.get('/user/patient/{user_id}', status_code=HTTPStatus.OK)
 async def get_patient(user_id: str):
-    res = await crud_patient.get_one(user_id, session)
+    # res = await crud_patient.get_one(user_id, session)
+    res = await crud_patient.get_one(session, filter = {"user_id": user_id})
     return res
 
 @app.post('/register/patient/{user_id}', status_code=HTTPStatus.CREATED)
@@ -181,7 +183,8 @@ async def delete_appointment(appointment_id: str):
 @app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
 async def book_appointment(appointment_id: str, patient_id: str):
     # Fetch the current appointment details
-    appointment = await crud_appointment.get_one(appointment_id, session)
+    # appointment = await crud_appointment.get_one(appointment_id, session)
+    appointment = await crud_appointment.get_one(session, filter = {"appointment_id": appointment_id})
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
@@ -219,25 +222,30 @@ async def summarize_transcription(summary_doc_id: str):
 
         Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
     '''
+    headers = {
+            # "Accept": "application/json", 
+            # "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_KEY}"
+        },
+    
+    data = {
+            "model": "gpt-3.5-turbo", 
+            "prompt": prompt, "max_tokens": 600
+    } 
 
     # Using OpenAI to generate a summary
     try:
+        print("Requesting OpenAI API")
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",
-                headers= {
-                    "Accept": "application/json", 
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {OPENAI_KEY}"
-                },
-                data={
-                    "model": "gpt-3.5-turbo", 
-                    "prompt": prompt, "max_tokens": 600
-                } 
+                headers=headers,
+                data=data
             )
             response.raise_for_status()
             summary = response.json()['choices'][0]['text'].strip()
             return {"summary": summary}
+
 
     except Exception as e:
         print(f"An error occurred: {e}")
