@@ -151,7 +151,7 @@ async def add_appointment(physician_id: str, appointment_data: AppointmentCreate
     appointment = await crud_appointment.create(new_appointment, session)
     return appointment
 
-@app.post('get_appointments/{physician_id}', status_code=HTTPStatus.OK)
+@app.get('/get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
     appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
     return appointments
