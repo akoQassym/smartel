@@ -78,12 +78,14 @@ async def create_user(user_data: UserCreateModel):
 
 @app.get('/user/{user_id}', status_code=HTTPStatus.OK)
 async def get_user(user_id: str):
-    res = await crud_user.get_one(user_id, session)
+    # res = await crud_user.get_one(user_id, session)
+    res = await crud_user.get_one(session, filter = {"user_id": user_id})
     return res
 
 @app.get('/user/patient/{user_id}', status_code=HTTPStatus.OK)
 async def get_patient(user_id: str):
-    res = await crud_patient.get_one(user_id, session)
+    # res = await crud_patient.get_one(user_id, session)
+    res = await crud_patient.get_one(session, filter = {"user_id": user_id})
     return res
 
 @app.post('/register/patient/{user_id}', status_code=HTTPStatus.CREATED)
@@ -181,7 +183,8 @@ async def delete_appointment(appointment_id: str):
 @app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
 async def book_appointment(appointment_id: str, patient_id: str):
     # Fetch the current appointment details
-    appointment = await crud_appointment.get_one(appointment_id, session)
+    # appointment = await crud_appointment.get_one(appointment_id, session)
+    appointment = await crud_appointment.get_one(session, filter = {"appointment_id": appointment_id})
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
@@ -195,14 +198,15 @@ async def book_appointment(appointment_id: str, patient_id: str):
     return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
 # ------ APIS FOR GENERATING DOCUMENTS ------ #
-@app.post('transcribe_audio', status_code=HTTPStatus.CREATED)
+@app.post('/transcribe_audio/', status_code=HTTPStatus.CREATED)
 async def transcribe_audio(audio_blob: str):
     pass
 
-@app.post('/summarize_transcription/{document_id}', status_code=HTTPStatus.OK)
-async def summarize_transcription(document_id: str):
-    transcription = await crud_summary_document.get_one(document_id)
-    
+@app.post('/summarize_transcription/{summary_doc_id}', status_code=HTTPStatus.OK)
+async def summarize_transcription(summary_doc_id: str):
+    result = await crud_summary_document.get_one(session, filter={"summary_doc_id": summary_doc_id})
+    transcription = result.transcription
+
     # Create a prompt for the OpenAI API
     prompt = f'''
         You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
@@ -218,27 +222,46 @@ async def summarize_transcription(document_id: str):
 
         Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
     '''
+    headers = {
+            # "Accept": "application/json", 
+            # "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_KEY}"
+        },
+    
+    data = {
+            "model": "gpt-3.5-turbo", 
+            "prompt": prompt, "max_tokens": 600
+    } 
 
     # Using OpenAI to generate a summary
     try:
-        response = await httpx.post(
-            "https://api.openai.com/v1/engines/davinci-codex/completions",
-            headers={
-                "Authorization": f"Bearer {OPENAI_KEY}"
-            },
-            json={
-                "prompt": prompt,
-                "max_tokens": 150  # Adjust based on your needs
-            }
-        )
-        response.raise_for_status()
-        summary = response.json()['choices'][0]['text'].strip()
-        return {"summary": summary}
+        print("Requesting OpenAI API")
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                data=data
+            )
+            response.raise_for_status()
+            summary = response.json()['choices'][0]['text'].strip()
+            return {"summary": summary}
+
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # raise HTTPException(status_code=500, detail="An internal error occurred")
     
-    except httpx.HTTPError as error:
-        raise HTTPException(status_code=error.response.status_code, detail="Failed to generate summary")
-
-
+    # try:
+    #     # response = httpx.post(
+    #     #     "https://api.openai.com/v1/engines/davinci-codex/completions",
+    #     #     headers={
+    #     #         "Authorization": f"Bearer {OPENAI_KEY}"
+    #     #     },
+    #     #     json={
+    #     #         "prompt": prompt,
+    #     #         "max_tokens": 150  # Adjust based on your needs
+    #     #     }
+    #     # )
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
@@ -253,5 +276,5 @@ async def summarize_transcription(document_id: str):
     done: delete_appointment(appointment_id)
     done: book_appointment(appointment_id)
     transcribe_audio(audio_blob)
-    summarize_transcription(document_id)
+    summarize_transcription(summary_doc_id)
 '''
