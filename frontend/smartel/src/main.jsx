@@ -12,11 +12,13 @@ import Dashboard from "./routes/Dashboard.jsx";
 import MedicalDocumentsPage from "./routes/MedicalDocumentsPage.jsx";
 import AppointmentsPage from "./routes/AppointmentsPage.jsx";
 import ConsultationReportsPage from "./routes/ConsultationReportsPage.jsx";
+import CompletePatientProfile from "./routes/CompletePatientProfile.jsx";
 import Profile from "./routes/Profile.jsx";
 import PhysicianDashboard from "./routes/PhysicianDashboard.jsx";
 import PhysicianConsultationGen from "./routes/PhysicianConsultationGen.jsx";
 import PhysicianAppointments from "./routes/PhysicianAppointments.jsx";
 import PhysicianProfile from "./routes/PhysicianProfile.jsx";
+import CompletePhysicianProfile from "./routes/CompletePhysicianProfile.jsx";
 
 // For Clerk Authentication
 import { ClerkProvider, SignUp, SignIn } from "@clerk/clerk-react";
@@ -51,6 +53,10 @@ const ClerkWithRoutes = () => {
             element={<ConsultationReportsPage />}
           />
           <Route path="/patientProfile" element={<Profile />} />
+          <Route
+            path="/patientProfileCompletion"
+            element={<CompletePatientProfile />}
+          />
           {/*Physician portal routes below */}
           <Route path="/physicianDashboard" element={<PhysicianDashboard />} />
           <Route
@@ -62,6 +68,10 @@ const ClerkWithRoutes = () => {
             element={<PhysicianAppointments />}
           />
           <Route path="/physicianProfile" element={<PhysicianProfile />} />
+          <Route
+            path="/physicianProfileCompletion"
+            element={<CompletePhysicianProfile />}
+          />
         </Route>
       </Routes>
     </ClerkProvider>
