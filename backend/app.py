@@ -114,7 +114,7 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
     physician = await crud_physician.create(new_physician, session)
     return physician
 
-@app.post('/edit/{user_id}', status_code=HTTPStatus.OK)
+@app.patch('/edit/{user_id}', status_code=HTTPStatus.OK)
 async def edit_user(
     user_id: str, 
     patient_data: Optional[PatientCreateModel] = Body(default=None),
@@ -173,7 +173,7 @@ async def edit_appointment(appointment_id: str, appointment_data: AppointmentCre
     updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), session)
     return updated_appointment
 
-@app.post('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+@app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
     deleted = await crud_appointment.delete(appointment_id, session)
     return {"message": "Appointment deleted successfully", "data": deleted}
