@@ -9,9 +9,13 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
 from fastapi.middleware.cors import CORSMiddleware
-# from pandas import pd
 from typing import List, Optional
 import uuid
+import openai
+import httpx
+import asyncio
+from dotenv import load_dotenv
+import os 
 
 # local library
 from crud import CRUD
@@ -19,6 +23,9 @@ from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
 from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
+
+load_dotenv()
+OPENAI_KEY = os.getenv("OPENAI_KEY")
 
 app = FastAPI(
     title = "Smartel API",
@@ -151,17 +158,17 @@ async def get_specializations():
 
 
 # ------ APIS FOR APPOINTMENTS ------ #
-@app.post('/add_appointment', status_code=HTTPStatus.CREATED)   
-async def add_appointment(appointment_data: AppointmentCreateModel): 
+@app.post('/add_appointment/{physician_id}', status_code=HTTPStatus.CREATED)   
+async def add_appointment(physician_id: str, appointment_data: AppointmentCreateModel): 
     new_appointment = Appointment(
-        physician_id = appointment_data.physician_id,
+        physician_id = physician_id,
         start_date_time = appointment_data.start_date_time,
     )
 
     appointment = await crud_appointment.create(new_appointment, session)
     return appointment
 
-@app.post('get_appointments/{physician_id}', status_code=HTTPStatus.OK)
+@app.get('/get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
     appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
     return appointments
@@ -192,6 +199,99 @@ async def book_appointment(appointment_id: str, patient_id: str):
     
     return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
+# ------ APIS FOR GENERATING DOCUMENTS ------ #
+@app.post('transcribe_audio', status_code=HTTPStatus.CREATED)
+async def transcribe_audio(audio_blob: str):
+    pass
+
+@app.post('/summarize_transcription/{document_id}', status_code=HTTPStatus.OK)
+async def summarize_transcription(document_id: str):
+    transcription = await crud_summary_document.get_one(document_id)
+    
+    # Create a prompt for the OpenAI API
+    prompt = f'''
+        You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
+        and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
+
+        <transcription> {transcription} </transcription>
+
+        The summary of the transcription should include the following sections:
+        1. Reason for Consultation: This section sets the stage for the entire visit and should succinctly describe why the patient sought medical attention.
+        2. Examination Findings: This section documents the findings from the physical examination and any diagnostic tests ordered during the consultation. 
+        3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
+        4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
+
+        Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
+    '''
+
+    # Using OpenAI to generate a summary
+    try:
+        response = await httpx.post(
+            "https://api.openai.com/v1/engines/davinci-codex/completions",
+            headers={
+                "Authorization": f"Bearer {OPENAI_KEY}"
+            },
+            json={
+                "prompt": prompt,
+                "max_tokens": 150  # Adjust based on your needs
+            }
+        )
+        response.raise_for_status()
+        summary = response.json()['choices'][0]['text'].strip()
+        return {"summary": summary}
+    
+    except httpx.HTTPError as error:
+        raise HTTPException(status_code=error.response.status_code, detail="Failed to generate summary")
+
+
+# ------ APIS FOR LOCAL USE ------ #
+async def load_transcriptions(directory_path: str):
+    print("Function called")
+    # Path object for the directory
+    from pathlib import Path
+
+    path = Path(directory_path)
+
+    print(f"Loading transcriptions from {path}")
+
+    counter = 0
+    if not path.exists():
+        print(f"Directory {path} does not exist")
+        return
+    
+    try:
+        # Iterate over text files in the directory
+        for file_path in path.glob('*.txt'):  # Adjust the pattern if necessary
+            counter += 1
+            if counter > 10:
+                break
+            
+            # create a dummy string for the appointment_id
+            appointment_id = "appointment_id_" + str(counter)
+            appointment_id = str(uuid.uuid4())
+            # Read the content of each file
+            with open(file_path, 'r', encoding='utf-8') as file:
+                transcription = file.read()
+
+            # Create an instance of SummaryDocument
+            summary_document = SummaryDocument(
+                transcription = transcription,
+                appointment_id = appointment_id  # This needs to be obtained or set appropriately
+            )
+
+            print(f"Appointment ID: {summary_document.appointment_id} is loaded into the database")
+
+            # Use the CRUD class to save the transcription to the database
+            await crud_summary_document.create(summary_document, session)
+
+            print("Transcription loaded successfully")
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+asyncio.run(load_transcriptions('./data/clean_transcript/'))
+
+
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
@@ -205,5 +305,6 @@ async def book_appointment(appointment_id: str, patient_id: str):
     done: edit_appointment(appointment_id, date_time, duration)
     done: delete_appointment(appointment_id)
     done: book_appointment(appointment_id)
-    generate_document(audio_blob)
+    transcribe_audio(audio_blob)
+    summarize_transcription(document_id)
 '''
