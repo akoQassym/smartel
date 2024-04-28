@@ -195,14 +195,15 @@ async def book_appointment(appointment_id: str, patient_id: str):
     return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
 # ------ APIS FOR GENERATING DOCUMENTS ------ #
-@app.post('transcribe_audio', status_code=HTTPStatus.CREATED)
+@app.post('/transcribe_audio/', status_code=HTTPStatus.CREATED)
 async def transcribe_audio(audio_blob: str):
     pass
 
-@app.post('/summarize_transcription/{document_id}', status_code=HTTPStatus.OK)
-async def summarize_transcription(document_id: str):
-    transcription = await crud_summary_document.get_one(document_id)
-    
+@app.post('/summarize_transcription/{summary_doc_id}', status_code=HTTPStatus.OK)
+async def summarize_transcription(summary_doc_id: str):
+    result = await crud_summary_document.get_one(session, filter={"summary_doc_id": summary_doc_id})
+    transcription = result.transcription
+
     # Create a prompt for the OpenAI API
     prompt = f'''
         You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
@@ -221,71 +222,38 @@ async def summarize_transcription(document_id: str):
 
     # Using OpenAI to generate a summary
     try:
-        response = await httpx.post(
-            "https://api.openai.com/v1/engines/davinci-codex/completions",
-            headers={
-                "Authorization": f"Bearer {OPENAI_KEY}"
-            },
-            json={
-                "prompt": prompt,
-                "max_tokens": 150  # Adjust based on your needs
-            }
-        )
-        response.raise_for_status()
-        summary = response.json()['choices'][0]['text'].strip()
-        return {"summary": summary}
-    
-    except httpx.HTTPError as error:
-        raise HTTPException(status_code=error.response.status_code, detail="Failed to generate summary")
-
-
-# ------ APIS FOR LOCAL USE ------ #
-async def load_transcriptions(directory_path: str):
-    print("Function called")
-    # Path object for the directory
-    from pathlib import Path
-
-    path = Path(directory_path)
-
-    print(f"Loading transcriptions from {path}")
-
-    counter = 0
-    if not path.exists():
-        print(f"Directory {path} does not exist")
-        return
-    
-    try:
-        # Iterate over text files in the directory
-        for file_path in path.glob('*.txt'):  # Adjust the pattern if necessary
-            counter += 1
-            if counter > 10:
-                break
-            
-            # create a dummy string for the appointment_id
-            appointment_id = "457d2963-2f8c-4551-bacd-ca9d7a2b954a"
-            # Read the content of each file
-            with open(file_path, 'r', encoding='utf-8') as file:
-                transcription = file.read()
-
-            # Create an instance of SummaryDocument
-            summary_document = SummaryDocument(
-                transcription = transcription,
-                appointment_id = appointment_id  # This needs to be obtained or set appropriately
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers= {
+                    "Accept": "application/json", 
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {OPENAI_KEY}"
+                },
+                data={
+                    "model": "gpt-3.5-turbo", 
+                    "prompt": prompt, "max_tokens": 600
+                } 
             )
+            response.raise_for_status()
+            summary = response.json()['choices'][0]['text'].strip()
+            return {"summary": summary}
 
-            print(f"Appointment ID: {summary_document.appointment_id} is loaded into the database")
-
-            # Use the CRUD class to save the transcription to the database
-            await crud_summary_document.create(summary_document, session)
-
-            print("Transcription loaded successfully")
-    
     except Exception as e:
         print(f"An error occurred: {e}")
-
-asyncio.run(load_transcriptions('./data/clean_transcript/'))
-
-
+        # raise HTTPException(status_code=500, detail="An internal error occurred")
+    
+    # try:
+    #     # response = httpx.post(
+    #     #     "https://api.openai.com/v1/engines/davinci-codex/completions",
+    #     #     headers={
+    #     #         "Authorization": f"Bearer {OPENAI_KEY}"
+    #     #     },
+    #     #     json={
+    #     #         "prompt": prompt,
+    #     #         "max_tokens": 150  # Adjust based on your needs
+    #     #     }
+    #     # )
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
@@ -300,5 +268,5 @@ asyncio.run(load_transcriptions('./data/clean_transcript/'))
     done: delete_appointment(appointment_id)
     done: book_appointment(appointment_id)
     transcribe_audio(audio_blob)
-    summarize_transcription(document_id)
+    summarize_transcription(summary_doc_id)
 '''
