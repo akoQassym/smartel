@@ -94,6 +94,11 @@ async def create_patient(user_id: str, patient_data: PatientCreateModel):
     patient = await crud_patient.create(new_patient, session)
     return patient
 
+@app.get('/user/physician/{user_id}', status_code=HTTPStatus.OK)
+async def get_physician(user_id: str):
+    res = await crud_physician.get_one(user_id, session)
+    return res
+
 @app.post('/register/physician/{user_id}', status_code=HTTPStatus.CREATED)
 async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
     new_physician = Physician(

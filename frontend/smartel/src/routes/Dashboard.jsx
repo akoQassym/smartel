@@ -12,7 +12,7 @@ function Dashboard() {
   const { user } = useUser();
   const { isLoaded, session } = useSession();
   const userRole = checkUserRole(session);
-  console.log(userRole);
+  //console.log(userRole);
 
   const checkIfRegistered = async () => {
     try {
