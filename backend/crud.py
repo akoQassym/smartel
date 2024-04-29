@@ -22,9 +22,9 @@ class CRUD:
             await session.refresh(instance_data)
             return instance_data
 
-    async def get_one(self, id, async_session: async_sessionmaker[AsyncSession]):
+    async def get_one(self, async_session: async_sessionmaker[AsyncSession], filter = None):
         async with async_session() as session:
-            query = select(self.model).filter_by(user_id=id)
+            query = select(self.model).filter_by(**filter)
             result = await session.execute(query)
             try:
                 return result.scalar_one()
@@ -58,11 +58,11 @@ class CRUD:
 
     async def delete(self, id, async_session: async_sessionmaker[AsyncSession]):
         async with async_session() as session:
-            query = select(self.model).filter_by(id=id)
+            query = select(self.model).filter_by(appointment_id=id)
             result = await session.execute(query)
             try:
                 instance = result.scalar_one()
-                session.delete(instance)
+                await session.delete(instance)
                 await session.commit()
                 return True
             except NoResultFound:
