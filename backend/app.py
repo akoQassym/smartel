@@ -4,7 +4,7 @@
 
 # standard library
 from http.client import HTTPException
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Query, Body, Request
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
@@ -36,13 +36,13 @@ app = FastAPI(
 # Allow requests from all origins with appropriate methods and headers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can specify specific origins instead of "*" for production
+    allow_origins=["http://localhost:5173", "*"],  # You can specify specific origins instead of "*" for production
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
-session = async_sessionmaker(
+async_session = async_sessionmaker(
         bind = engine,
         expire_on_commit = False,
     )
@@ -62,7 +62,6 @@ crud_summary_document = CRUD(SummaryDocument)
 async def root():
     return {"message": "Hello World"}
 
-
 # ------ APIS FOR USERS ------ #
 @app.post('/register', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel): 
@@ -73,19 +72,17 @@ async def create_user(user_data: UserCreateModel):
         email = user_data.email,
     )
 
-    user = await crud_user.create(new_user, session)
+    user = await crud_user.create(new_user, async_session)
     return user
 
 @app.get('/user/{user_id}', status_code=HTTPStatus.OK)
 async def get_user(user_id: str):
-    # res = await crud_user.get_one(user_id, session)
-    res = await crud_user.get_one(session, filter = {"user_id": user_id})
+    res = await crud_user.get_one(async_session, filter = {"user_id": user_id})
     return res
 
 @app.get('/user/patient/{user_id}', status_code=HTTPStatus.OK)
 async def get_patient(user_id: str):
-    # res = await crud_patient.get_one(user_id, session)
-    res = await crud_patient.get_one(session, filter = {"user_id": user_id})
+    res = await crud_patient.get_one(async_session, filter = {"user_id": user_id})
     return res
 
 @app.post('/register/patient/{user_id}', status_code=HTTPStatus.CREATED)
@@ -100,12 +97,12 @@ async def create_patient(user_id: str, patient_data: PatientCreateModel):
         blood_type = patient_data.blood_type,
     )
 
-    patient = await crud_patient.create(new_patient, session)
+    patient = await crud_patient.create(new_patient, async_session)
     return patient
 
 @app.get('/user/physician/{user_id}', status_code=HTTPStatus.OK)
 async def get_physician(user_id: str):
-    res = await crud_physician.get_one(user_id, session)
+    res = await crud_physician.get_one(async_session, filter = {"user_id": user_id})
     return res
 
 @app.post('/register/physician/{user_id}', status_code=HTTPStatus.CREATED)
@@ -118,7 +115,7 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
         birth_date = physician_data.birth_date,
     )
 
-    physician = await crud_physician.create(new_physician, session)
+    physician = await crud_physician.create(new_physician, async_session)
     return physician
 
 @app.patch('/edit/{user_id}', status_code=HTTPStatus.OK)
@@ -130,13 +127,13 @@ async def edit_user(
 
     # Check and update patient
     if patient_data:
-        updated_patient = await crud_patient.update(user_id, patient_data.dict(exclude_unset=True), session)
+        updated_patient = await crud_patient.update(user_id, patient_data.dict(exclude_unset=True), async_session)
         if updated_patient:
             return {"message": "Patient updated successfully", "data": updated_patient}
     
     # Check and update physician
     if physician_data:
-        updated_physician = await crud_physician.update(user_id, physician_data.dict(exclude_unset=True), session)
+        updated_physician = await crud_physician.update(user_id, physician_data.dict(exclude_unset=True), async_session)
         if updated_physician:
             return {"message": "Physician updated successfully", "data": updated_physician}
 
@@ -150,12 +147,12 @@ async def add_spec(spec_data: SpecializationCreateModel):
         name = spec_data.name,
     )
 
-    spec = await crud_specialization.create(new_specialization, session)
+    spec = await crud_specialization.create(new_specialization, async_session)
     return spec
 
 @app.get('/get_specializations', status_code=HTTPStatus.OK)
 async def get_specializations():
-    specializations = await crud_specialization.get_all(session)
+    specializations = await crud_specialization.get_all(async_session)
     return specializations
 
 
@@ -167,35 +164,32 @@ async def add_appointment(physician_id: str, appointment_data: AppointmentCreate
         start_date_time = appointment_data.start_date_time,
     )
 
-    appointment = await crud_appointment.create(new_appointment, session)
+    appointment = await crud_appointment.create(new_appointment, async_session)
     return appointment
 
 @app.get('/get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
-    appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
+    appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id})
     return appointments
 
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
-    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), session)
+    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), async_session)
     return updated_appointment
 
 @app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
-    deleted = await crud_appointment.delete(appointment_id, session)
+    deleted = await crud_appointment.delete(appointment_id, async_session)
     return {"message": "Appointment deleted successfully", "data": deleted}
 
 @app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
 async def book_appointment(appointment_id: str, patient_id: str):
-    # Fetch the current appointment details
-    # appointment = await crud_appointment.get_one(appointment_id, session)
-    appointment = await crud_appointment.get_one(session, filter = {"appointment_id": appointment_id})
+    appointment = await crud_appointment.get_one(async_session, filter = {"appointment_id": appointment_id})
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
-    # Update the appointment attributes
     update_data = {'isBooked': True, 'patient_id': patient_id}
-    updated_appointment = await crud_appointment.update(appointment_id, update_data, session)
+    updated_appointment = await crud_appointment.update(appointment_id, update_data, async_session)
     
     if not updated_appointment:
         raise HTTPException(status_code=404, detail="Failed to update the appointment")
@@ -209,10 +203,9 @@ async def transcribe_audio(audio_blob: str):
 
 @app.post('/summarize_transcription/{summary_doc_id}', status_code=HTTPStatus.OK)
 async def summarize_transcription(summary_doc_id: str):
-    result = await crud_summary_document.get_one(session, filter={"summary_doc_id": summary_doc_id})
+    result = await crud_summary_document.get_one(async_session, filter={"summary_doc_id": summary_doc_id})
     transcription = result.transcription
 
-    # Create a prompt for the OpenAI API
     prompt = f'''
         You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
         and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
@@ -238,7 +231,6 @@ async def summarize_transcription(summary_doc_id: str):
             "prompt": prompt, "max_tokens": 600
     } 
 
-    # Using OpenAI to generate a summary
     try:
         print("Requesting OpenAI API")
         async with httpx.AsyncClient() as client:
@@ -255,7 +247,20 @@ async def summarize_transcription(summary_doc_id: str):
     except Exception as e:
         print(f"An error occurred: {e}")
         # raise HTTPException(status_code=500, detail="An internal error occurred")
+
+
+# Define CORS middleware specifically for the /user/physician/{user_id} endpoint
+# @app.middleware("http")
+# async def middleware(request: Request, call_next):
+#     if request.url.path.startswith("/user/physician/"):
+#         # Add CORS headers for this endpoint
+#         response = await call_next(request)
+#         response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+#         response.headers["Access-Control-Allow-Headers"] = "*"
+#         return response
+#     return await call_next(request)
     
+
     # try:
     #     # response = httpx.post(
     #     #     "https://api.openai.com/v1/engines/davinci-codex/completions",
