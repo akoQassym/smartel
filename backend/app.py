@@ -240,6 +240,10 @@ async def summarize_transcription(summary_doc_id: str):
         print(f"An error occurred: {e}")
         # raise HTTPException(status_code=500, detail="An internal error occurred")
 
+@app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
+async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocumentCreateModel):
+    updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
+    return updated_document
 
 # Define CORS middleware specifically for the /user/physician/{user_id} endpoint
 # @app.middleware("http")
