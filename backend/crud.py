@@ -42,9 +42,9 @@ class CRUD:
             result = await session.execute(query)
             return result.scalars().all()
 
-    async def update(self, id, update_data, async_session: async_sessionmaker[AsyncSession]):
+    async def update(self, update_data, async_session: async_sessionmaker[AsyncSession], filter = None):
         async with async_session() as session:
-            query = select(self.model).filter_by(user_id=id)
+            query = select(self.model).filter_by(**filter)
             result = await session.execute(query)
             try:
                 instance = result.scalar_one()
@@ -56,9 +56,9 @@ class CRUD:
             except NoResultFound:
                 return None
 
-    async def delete(self, id, async_session: async_sessionmaker[AsyncSession]):
+    async def delete(self, async_session: async_sessionmaker[AsyncSession], filter = None):
         async with async_session() as session:
-            query = select(self.model).filter_by(appointment_id=id)
+            query = select(self.model).filter_by(**filter)
             result = await session.execute(query)
             try:
                 instance = result.scalar_one()
