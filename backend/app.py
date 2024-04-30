@@ -130,13 +130,13 @@ async def edit_user(
 
     # Check and update patient
     if patient_data:
-        updated_patient = await crud_patient.update(user_id, patient_data.dict(exclude_unset=True), async_session)
+        updated_patient = await crud_patient.update(patient_data.dict(exclude_unset=True), async_session, {"user_id": user_id})
         if updated_patient:
             return {"message": "Patient updated successfully", "data": updated_patient}
     
     # Check and update physician
     if physician_data:
-        updated_physician = await crud_physician.update(user_id, physician_data.dict(exclude_unset=True), async_session)
+        updated_physician = await crud_physician.update(physician_data.dict(exclude_unset=True), async_session, {"user_id": user_id})
         if updated_physician:
             return {"message": "Physician updated successfully", "data": updated_physician}
 
@@ -177,7 +177,7 @@ async def get_appointments(physician_id: str):
 
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
-    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), async_session)
+    updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
     return updated_appointment
 
 @app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
@@ -192,7 +192,7 @@ async def book_appointment(appointment_id: str, patient_id: str):
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     update_data = {'isBooked': True, 'patient_id': patient_id}
-    updated_appointment = await crud_appointment.update(appointment_id, update_data, async_session)
+    updated_appointment = await crud_appointment.update(update_data, async_session, {"appointment_id": appointment_id})
     
     if not updated_appointment:
         raise HTTPException(status_code=404, detail="Failed to update the appointment")
