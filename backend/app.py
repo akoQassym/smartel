@@ -12,12 +12,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-import uuid
-import openai
+from dotenv import load_dotenv
 from openai import OpenAI
+
+import openai
+import uuid
 import httpx
 import asyncio
-from dotenv import load_dotenv
 import os 
 
 # local library
@@ -26,9 +27,12 @@ from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
 from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
-
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_KEY")
+
+if OPENAI_KEY is None:
+    raise ValueError("OPENAI_KEY not found in environment variables")
+
 openAIClient = OpenAI(api_key=OPENAI_KEY)
 
 app = FastAPI(
@@ -51,10 +55,7 @@ async_session = async_sessionmaker(
         expire_on_commit = False,
     )
 
-# here use the CRUD class to interact with the database initializing class takes
-# a good amount of time, so it is preferable to create a global instance to use
-# it throughout the application
-# crud_user = CRUD()
+# creating instances of CRUD for each model
 crud_user = CRUD(User)
 crud_patient = CRUD(Patient)
 crud_physician = CRUD(Physician)
@@ -131,13 +132,13 @@ async def edit_user(
 
     # Check and update patient
     if patient_data:
-        updated_patient = await crud_patient.update(user_id, patient_data.dict(exclude_unset=True), async_session)
+        updated_patient = await crud_patient.update(patient_data.dict(exclude_unset=True), async_session, {"user_id": user_id})
         if updated_patient:
             return {"message": "Patient updated successfully", "data": updated_patient}
     
     # Check and update physician
     if physician_data:
-        updated_physician = await crud_physician.update(user_id, physician_data.dict(exclude_unset=True), async_session)
+        updated_physician = await crud_physician.update(physician_data.dict(exclude_unset=True), async_session, {"user_id": user_id})
         if updated_physician:
             return {"message": "Physician updated successfully", "data": updated_physician}
 
@@ -178,7 +179,7 @@ async def get_appointments(physician_id: str):
 
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
-    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), async_session)
+    updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
     return updated_appointment
 
 @app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
@@ -193,7 +194,7 @@ async def book_appointment(appointment_id: str, patient_id: str):
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     update_data = {'isBooked': True, 'patient_id': patient_id}
-    updated_appointment = await crud_appointment.update(appointment_id, update_data, async_session)
+    updated_appointment = await crud_appointment.update(update_data, async_session, {"appointment_id": appointment_id})
     
     if not updated_appointment:
         raise HTTPException(status_code=404, detail="Failed to update the appointment")
@@ -246,31 +247,83 @@ async def summarize_transcription(summary_doc_id: str):
         print("Requesting OpenAI API")
         async with httpx.AsyncClient() as client:
             response = openAIClient.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": systemMessage},
-                {"role": "user", "content": userMessage}
-            ]
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": systemMessage},
+                    {"role": "user", "content": userMessage}
+                ]
             )
+            # update the summary document with the summary
+            content = response.choices[0].message.content
+            try:
+                await crud_summary_document.update({"markdown_summary": content}, async_session, {"summary_doc_id": summary_doc_id})
+            except Exception as e:
+                print(f"An error occurred: {e}")
             print(response)
             return(response)
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        # raise HTTPException(status_code=500, detail="An internal error occurred")
-
-
-# Define CORS middleware specifically for the /user/physician/{user_id} endpoint
-# @app.middleware("http")
-# async def middleware(request: Request, call_next):
-#     if request.url.path.startswith("/user/physician/"):
-#         # Add CORS headers for this endpoint
-#         response = await call_next(request)
-#         response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
-#         response.headers["Access-Control-Allow-Headers"] = "*"
-#         return response
-#     return await call_next(request)
     
+@app.post("/transcribe_and_summarize/{appointment_id}", status_code=HTTPStatus.CREATED)
+async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile = File(...)):
+    # Transcribe the audio
+    try:
+        # Create a temporary file to save the uploaded audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
+            # Write the audio data from the blob to the temporary file
+            temp_audio_file.write(await audio_file.read())
+            temp_audio_file.close()
+
+            # Transcribe the audio using the OpenAI API
+            transcription = openAIClient.audio.transcriptions.create(
+                model="whisper-1", 
+                file=open(temp_audio_file.name, 'rb')
+            )
+            
+    except Exception as e:
+        print("error when transcribing", e)
+        raise HTTPException(status_code=404, detail="failed to transcribe")
+    
+    # Get the summary 
+    systemMessage = f'''
+        You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
+        and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
+    '''
+    userMessage = f'''
+        <transcription> {transcription} </transcription>
+
+        The summary of the transcription should include the following sections:
+        1. Reason for Consultation: This section sets the stage for the entire visit and should succinctly describe why the patient sought medical attention.
+        2. Examination Findings: This section documents the findings from the physical examination and any diagnostic tests ordered during the consultation. 
+        3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
+        4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
+
+        Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
+    '''
+
+    try:
+        print("Requesting OpenAI API")
+        async with httpx.AsyncClient() as client:
+            response = openAIClient.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": systemMessage},
+                    {"role": "user", "content": userMessage}
+                ]
+            )
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    new_summary_doc = SummaryDocument(
+        appointment_id = appointment_id,
+        transcription = transcription.text,
+        markdown_summary = response.choices[0].message.content,
+    )
+
+    summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
+    return summary_doc
 
 '''
     done: create_user(user_id, email)
