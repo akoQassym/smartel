@@ -5,6 +5,8 @@
 # standard library
 from http.client import HTTPException
 from fastapi import FastAPI, Query, Body, Request
+import tempfile
+from fastapi import File, UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
@@ -200,8 +202,25 @@ async def book_appointment(appointment_id: str, patient_id: str):
 
 # ------ APIS FOR GENERATING DOCUMENTS ------ #
 @app.post('/transcribe_audio/', status_code=HTTPStatus.CREATED)
-async def transcribe_audio(audio_blob: str):
-    pass
+async def transcribe_audio(audio_file: UploadFile = File(...)):
+    try:
+        # Create a temporary file to save the uploaded audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
+            # Write the audio data from the blob to the temporary file
+            temp_audio_file.write(await audio_file.read())
+            temp_audio_file.close()
+
+            # Transcribe the audio using the OpenAI API
+            transcription = openAIClient.audio.transcriptions.create(
+                model="whisper-1", 
+                file=open(temp_audio_file.name, 'rb')
+            )
+            
+            # Return the transcription text
+            return {"transcription": transcription.text}
+    except Exception as e:
+        print("error when transcribing", e)
+        raise HTTPException(status_code=404, detail="failed to transcribe")
 
 @app.post('/summarize_transcription/{summary_doc_id}', status_code=HTTPStatus.OK)
 async def summarize_transcription(summary_doc_id: str):
