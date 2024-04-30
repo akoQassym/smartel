@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import uuid
 import openai
+from openai import OpenAI
 import httpx
 import asyncio
 from dotenv import load_dotenv
@@ -26,6 +27,7 @@ from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, S
 
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_KEY")
+openAIClient = OpenAI(api_key=OPENAI_KEY)
 
 app = FastAPI(
     title = "Smartel API",
@@ -205,11 +207,11 @@ async def transcribe_audio(audio_blob: str):
 async def summarize_transcription(summary_doc_id: str):
     result = await crud_summary_document.get_one(async_session, filter={"summary_doc_id": summary_doc_id})
     transcription = result.transcription
-
-    prompt = f'''
+    systemMessage = f'''
         You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
         and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
-
+    '''
+    userMessage = f'''
         <transcription> {transcription} </transcription>
 
         The summary of the transcription should include the following sections:
@@ -220,29 +222,19 @@ async def summarize_transcription(summary_doc_id: str):
 
         Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
     '''
-    headers = {
-            # "Accept": "application/json", 
-            # "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_KEY}"
-        },
-    
-    data = {
-            "model": "gpt-3.5-turbo", 
-            "prompt": prompt, "max_tokens": 600
-    } 
 
     try:
         print("Requesting OpenAI API")
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers=headers,
-                data=data
+            response = openAIClient.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": systemMessage},
+                {"role": "user", "content": userMessage}
+            ]
             )
-            response.raise_for_status()
-            summary = response.json()['choices'][0]['text'].strip()
-            return {"summary": summary}
-
+            print(response)
+            return(response)
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -261,17 +253,6 @@ async def summarize_transcription(summary_doc_id: str):
 #     return await call_next(request)
     
 
-    # try:
-    #     # response = httpx.post(
-    #     #     "https://api.openai.com/v1/engines/davinci-codex/completions",
-    #     #     headers={
-    #     #         "Authorization": f"Bearer {OPENAI_KEY}"
-    #     #     },
-    #     #     json={
-    #     #         "prompt": prompt,
-    #     #         "max_tokens": 150  # Adjust based on your needs
-    #     #     }
-    #     # )
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
