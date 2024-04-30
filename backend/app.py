@@ -265,6 +265,65 @@ async def summarize_transcription(summary_doc_id: str):
     except Exception as e:
         print(f"An error occurred: {e}")
     
+@app.post("/transcribe_and_summarize/{appointment_id}", status_code=HTTPStatus.CREATED)
+async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile = File(...)):
+    # Transcribe the audio
+    try:
+        # Create a temporary file to save the uploaded audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
+            # Write the audio data from the blob to the temporary file
+            temp_audio_file.write(await audio_file.read())
+            temp_audio_file.close()
+
+            # Transcribe the audio using the OpenAI API
+            transcription = openAIClient.audio.transcriptions.create(
+                model="whisper-1", 
+                file=open(temp_audio_file.name, 'rb')
+            )
+            
+    except Exception as e:
+        print("error when transcribing", e)
+        raise HTTPException(status_code=404, detail="failed to transcribe")
+    
+    # Get the summary 
+    systemMessage = f'''
+        You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
+        and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
+    '''
+    userMessage = f'''
+        <transcription> {transcription} </transcription>
+
+        The summary of the transcription should include the following sections:
+        1. Reason for Consultation: This section sets the stage for the entire visit and should succinctly describe why the patient sought medical attention.
+        2. Examination Findings: This section documents the findings from the physical examination and any diagnostic tests ordered during the consultation. 
+        3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
+        4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
+
+        Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
+    '''
+
+    try:
+        print("Requesting OpenAI API")
+        async with httpx.AsyncClient() as client:
+            response = openAIClient.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": systemMessage},
+                    {"role": "user", "content": userMessage}
+                ]
+            )
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    new_summary_doc = SummaryDocument(
+        appointment_id = appointment_id,
+        transcription = transcription.text,
+        markdown_summary = response.choices[0].message.content,
+    )
+
+    summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
+    return summary_doc
 
 '''
     done: create_user(user_id, email)
