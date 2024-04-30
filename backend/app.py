@@ -10,12 +10,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-import uuid
-import openai
+from dotenv import load_dotenv
 from openai import OpenAI
+
+import openai
+import uuid
 import httpx
 import asyncio
-from dotenv import load_dotenv
 import os 
 
 # local library
@@ -24,9 +25,12 @@ from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
 from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
-
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_KEY")
+
+if OPENAI_KEY is None:
+    raise ValueError("OPENAI_KEY not found in environment variables")
+
 openAIClient = OpenAI(api_key=OPENAI_KEY)
 
 app = FastAPI(
@@ -49,10 +53,7 @@ async_session = async_sessionmaker(
         expire_on_commit = False,
     )
 
-# here use the CRUD class to interact with the database initializing class takes
-# a good amount of time, so it is preferable to create a global instance to use
-# it throughout the application
-# crud_user = CRUD()
+# creating instances of CRUD for each model
 crud_user = CRUD(User)
 crud_patient = CRUD(Patient)
 crud_physician = CRUD(Physician)
@@ -227,30 +228,23 @@ async def summarize_transcription(summary_doc_id: str):
         print("Requesting OpenAI API")
         async with httpx.AsyncClient() as client:
             response = openAIClient.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": systemMessage},
-                {"role": "user", "content": userMessage}
-            ]
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": systemMessage},
+                    {"role": "user", "content": userMessage}
+                ]
             )
+            # update the summary document with the summary
+            content = response.choices[0].message.content
+            try:
+                await crud_summary_document.update({"markdown_summary": content}, async_session, {"summary_doc_id": summary_doc_id})
+            except Exception as e:
+                print(f"An error occurred: {e}")
             print(response)
             return(response)
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        # raise HTTPException(status_code=500, detail="An internal error occurred")
-
-
-# Define CORS middleware specifically for the /user/physician/{user_id} endpoint
-# @app.middleware("http")
-# async def middleware(request: Request, call_next):
-#     if request.url.path.startswith("/user/physician/"):
-#         # Add CORS headers for this endpoint
-#         response = await call_next(request)
-#         response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
-#         response.headers["Access-Control-Allow-Headers"] = "*"
-#         return response
-#     return await call_next(request)
     
 
 '''
