@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUser, useSession, useOrganization } from "@clerk/clerk-react";
 import NavBar from "../components/NavBar";
 import { useNavigate } from "react-router-dom";
