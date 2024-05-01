@@ -325,6 +325,12 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
     summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
     return summary_doc
 
+
+@app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
+async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocumentCreateModel):
+    updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
+    return updated_document
+
 '''
     done: create_user(user_id, email)
     done: (implemented in a separate registration) add_patient_detail(user_id, first_name, last_name, age, sex, weight, height, blood_type)
