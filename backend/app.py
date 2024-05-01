@@ -207,8 +207,8 @@ async def book_appointment(appointment_id: str, patient_id: str):
     return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
 # ------ APIS FOR GENERATING DOCUMENTS ------ #
-@app.post('/transcribe_audio/', status_code=HTTPStatus.CREATED)
-async def transcribe_audio(audio_file: UploadFile = File(...)):
+@app.post('/transcribe_audio/{appointment_id}', status_code=HTTPStatus.CREATED)
+async def transcribe_audio(appointment_id : str, audio_file: UploadFile = File(...)):
     try:
         # Create a temporary file to save the uploaded audio
         with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
@@ -222,8 +222,14 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):
                 file=open(temp_audio_file.name, 'rb')
             )
             
-            # Return the transcription text
-            return {"transcription": transcription.text}
+            new_summary_doc = SummaryDocument(
+                appointment_id = appointment_id,
+                transcription = transcription.text
+            )
+            summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
+
+            return {summary_doc}
+
     except Exception as e:
         print("error when transcribing", e)
         raise HTTPException(status_code=404, detail="failed to transcribe")
@@ -265,7 +271,7 @@ async def summarize_transcription(summary_doc_id: str):
             except Exception as e:
                 print(f"An error occurred: {e}")
             print(response)
-            return(response)
+            return({"summary" : response.choices[0].message.content})
 
     except Exception as e:
         print(f"An error occurred: {e}")
