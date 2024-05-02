@@ -15,7 +15,6 @@ const CalendarView = ({ events, onSelectEvent, ...props }) => (
       defaultDate={new Date()}
       popup={false}
       defaultView='week'
-      showAllEvents
       min={new Date(2023, 30, 12, 8, 0, 0)}
       onSelectEvent={onSelectEvent}
       onShowMore={(events, date) => this.setState({ showModal: true, events })}
