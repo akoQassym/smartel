@@ -177,6 +177,11 @@ async def get_appointments(physician_id: str):
     appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id})
     return appointments
 
+@app.get('/get_appointments/isbooked/{physician_id}', status_code=HTTPStatus.OK)
+async def get_appointments(physician_id: str):
+    appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id, "isBooked": True})
+    return appointments
+
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
     updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
