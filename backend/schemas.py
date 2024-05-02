@@ -167,9 +167,7 @@ class SummaryDocumentModel(BaseModel):
     class Config:
         orm_mode = True
 
-class SummaryDocumentCreateModel(BaseModel):
-    appointment_id: str
-    transcription: str
+class SummaryDocumentEditModel(BaseModel):
     markdown_summary: str
 
     class Config:

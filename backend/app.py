@@ -25,7 +25,7 @@ import os
 from crud import CRUD
 from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
-from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
+from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentEditModel
 
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_KEY")
@@ -327,8 +327,8 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
 
 
 @app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
-async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocumentCreateModel):
-    updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
+async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocumentEditModel):
+    updated_document = await crud_summary_document.update(summary_doc_data.dict(exclude_unset=True), async_session, {"summary_doc_id": summary_doc_id})
     return updated_document
 
 '''
@@ -344,6 +344,6 @@ async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocum
     done: edit_appointment(appointment_id, date_time, duration)
     done: delete_appointment(appointment_id)
     done: book_appointment(appointment_id)
-    transcribe_audio(audio_blob)
-    summarize_transcription(summary_doc_id)
+    done: transcribe_audio(audio_blob)
+    done: summarize_transcription(summary_doc_id)
 '''
