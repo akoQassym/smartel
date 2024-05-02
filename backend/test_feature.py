@@ -101,6 +101,48 @@ def test_book_appointment_failed():
     save_outcomes("book_appointment_failed", response.status_code > 300)
 
 
+def test_summarize_transcription():
+    appointment_id = APPOINTMENT_ID
+    response = client.post(f"/summarize_transcription/{appointment_id}")
+
+    save_outcomes("summarize_transcription", response.status_code < 300)
+
+# def test_transcribe_and_summarize():
+#     appointment_id = APPOINTMENT_ID
+#     response = client.post(
+#         f"/transcribe_and_summarize/{appointment_id}",
+#         json={
+#             "transcription": "This is a transcription"
+#         }
+#     )
+
+#     save_outcomes("transcribe_and_summarize", response.status_code < 300)
+
+# def test_review_edit():
+#     document_id = DOCUMENT_ID
+#     response = client.post(
+#         f"/review/{document_id}",
+#         json={
+#             "review": "This is a review"
+#         }
+#     )
+    
+#     save_outcomes("review_edit", response.status_code < 300)
+
+def test_get_summary():
+    document_id = DOCUMENT_ID
+    response = client.get(f"/summary/{document_id}")
+    
+    save_outcomes("get_summary", response.status_code < 300)
+
+def test_get_summary_failed():
+    document_id = NON_EXISTING_ID
+    response = client.get(f"/summary/{document_id}")
+    
+    save_outcomes("get_summary_failed", response.status_code >= 300)
+
+
+
 if __name__ == "__main__":
     # test_register() # working
     # test_get_user()
