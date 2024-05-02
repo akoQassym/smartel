@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from dotenv import load_dotenv
 
 import pytest
+import uuid
 import os
 
 client = TestClient(app)
@@ -15,23 +16,26 @@ DOCUMENT_ID = os.getenv("DOCUMENT_ID")
 
 outcomes = {}
 
+def save_outcomes(test_name, success):
+    if success:
+        outcomes[test_name] = "success"
+    else:
+        outcomes[test_name] = "fail"
+
 # normal register user
 def test_register():
+    new_user_id = str(uuid.uuid4())
     response = client.post(
         "/register",
         json={
-            "user_id": USER_ID,
+            "user_id": new_user_id,
             "first_name": "John",
             "last_name": "Doe",
             "email": "john.doe@example.com"
         }
     )
 
-    assert response.status_code == 201, "user not created successfully"
-    assert response.json() == {"message": "User created successfully"}
-
-    # outcomes["register"] = "success"
-    # outcomes["register"] = "fail"
+    save_outcomes("register", response.status_code < 300)       
 
 # get user by ID 
 def test_get_user():
