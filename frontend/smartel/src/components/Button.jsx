@@ -4,7 +4,7 @@ const Button = ({ onClick, className, bgColor, labelColor, children, ...props })
   return (
     <button 
         onClick={onClick} 
-        className={`px-4 py-2 rounded-md transition duration-300 ease-in-out shadow-sm hover:shadow-lg ${className}`}
+        className={`font-montserrat px-4 py-2 rounded-md transition duration-300 ease-in-out shadow-sm hover:shadow-lg ${className}`}
         style={{
             backgroundColor: bgColor ?? '#34D399',
             color: labelColor ?? '#fff',
