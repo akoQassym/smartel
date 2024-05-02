@@ -191,7 +191,9 @@ function CompletePhysicianProfile() {
                         </select>
                       </div>
                       <div className="flex justify-evenly">
-                        <label className="block mx-4 my-4">Sex:</label>
+                        <label className="block mx-4 my-4">
+                          Specialization:
+                        </label>
                         <select
                           className="h-fit p-1 my-auto rounded-md"
                           name="specialization_id"
@@ -200,13 +202,18 @@ function CompletePhysicianProfile() {
                           required={true}
                         >
                           <option value="0">Select</option>
-                          <option
-                            value={String(
-                              specializationIDs[0]?.specialization_id
-                            )}
-                          >
-                            Pediatrician
-                          </option>
+                          {specializationIDs.map((s) => {
+                            return (
+                              <>
+                                <option
+                                  value={String(s.specialization_id)}
+                                  key={s.specialization_id}
+                                >
+                                  {s.name}
+                                </option>
+                              </>
+                            );
+                          })}
                         </select>
                       </div>
                       <div className="flex justify-center mt-5">
