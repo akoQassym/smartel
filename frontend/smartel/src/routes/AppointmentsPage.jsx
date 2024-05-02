@@ -16,6 +16,7 @@ function AppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [filterPhysician, setFilterPhysician] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const postAppointment = async (appointment_id, user_id) => {
@@ -72,6 +73,10 @@ function AppointmentsPage() {
     )).filter(event => event !== null)
   );
 
+  const selectPhysician = (physician_id) => {
+    setFilterPhysician((filterPhysician && filterPhysician == physician_id) ? null : physician_id);
+  }
+
   const bookAppointment = async () => {
     try {
       await postAppointment(selectedAppointment.appointment_id, user.id);
@@ -88,7 +93,6 @@ function AppointmentsPage() {
     try {
       setAppointmentsLoading(true);
       const data = await getAvailableAppointments(selectedSpecialization.value);
-      console.log(data);
       setAppointments(data);
       setCalendarEvents(mapAppointmentsToEvents(data));
     } catch (error) {
@@ -161,8 +165,8 @@ function AppointmentsPage() {
                 </div>
                 <div className="mt-5 max-h-full">
                   <p className="font-montserrat text-md mb-2 font-bold">Available physicians</p>
-                  {appointments && appointments.map((physician, key) => (
-                    <div key={key} className={`my-3 py-3 px-3 bg-gray-100 rounded-md ${physician.appointments.length === 0 ? 'opacity-20' : 'cursor-pointer hover:shadow-md'}`}>
+                  {appointments && appointments.map(physician => (
+                    <div key={physician.physician_id} onClick={selectPhysician.bind(this, physician.physician_id)} className={`my-3 py-3 px-3 bg-gray-100 rounded-md ${physician.appointments.length === 0 ? 'opacity-20' : 'cursor-pointer hover:shadow-md'}`}>
                       <p>{physician.first_name} {physician.last_name} ({physician.sex})</p>
                     </div>
                   ))}
