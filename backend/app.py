@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
+from sqlalchemy import or_
 
 import openai
 import uuid
@@ -346,6 +347,32 @@ async def review_summary_doc(summary_doc_id: str, summary_data: SummaryDocumentC
         return updated_document
     except Exception as e:
         print(f"An error occurred: {e}")
+
+from sqlalchemy import or_
+
+@app.get('/get_summary_documents/{patient_id}', status_code=HTTPStatus.OK)
+async def get_summary_documents(patient_id: str):
+    try:
+        # Get all appointments associated with the patient_id
+        appointments = await crud_appointment.get_all(async_session, filter={"patient_id": patient_id})
+        
+        # Extract appointment IDs from the appointments
+        appointment_ids = [appointment.appointment_id for appointment in appointments]
+        
+        # Get all summary documents associated with the extracted appointment IDs
+        summary_documents = await crud_summary_document.get_all(
+            async_session, 
+            filter=or_(SummaryDocument.appointment_id == appointment_id for appointment_id in appointment_ids)
+        )
+        
+         # Filter out elements with null markdown_summary
+        summary_documents_filtered = [doc for doc in summary_documents if doc.markdown_summary is not None]
+        
+        return summary_documents_filtered
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 
 '''
     done: create_user(user_id, email)
