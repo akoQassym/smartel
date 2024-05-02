@@ -209,6 +209,11 @@ async def get_appointments(physician_id: str):
     appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id})
     return appointments
 
+@app.get('/get_appointments/isbooked/{physician_id}', status_code=HTTPStatus.OK)
+async def get_appointments(physician_id: str):
+    appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id, "isBooked": True})
+    return appointments
+
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
     updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
@@ -356,6 +361,12 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
 
     summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
     return summary_doc
+
+
+@app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
+async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocumentCreateModel):
+    updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
+    return updated_document
 
 '''
     done: create_user(user_id, email)
