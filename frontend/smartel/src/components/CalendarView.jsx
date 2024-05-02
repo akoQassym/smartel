@@ -17,7 +17,7 @@ const CalendarView = ({ events, onSelectEvent, ...props }) => (
       defaultView='week'
       min={new Date(2023, 30, 12, 8, 0, 0)}
       onSelectEvent={onSelectEvent}
-      onShowMore={(events, date) => this.setState({ showModal: true, events })}
+      onShowMore={(events) => this.setState({ showModal: true, events })}
       className="font-montserrat"
       {...props}
     />
