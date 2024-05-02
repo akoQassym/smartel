@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
+from datetime import datetime, timedelta
 
 import openai
 import uuid
@@ -186,20 +187,23 @@ async def get_appointments(specialization_id: str):
     for physician in physicians:
         user = await crud_user.get_one(async_session, filter={"user_id": physician.user_id})
 
+        current_date = datetime.now().date()
+
         physician_appointments = await crud_appointment.get_all(
             async_session, 
             filter={"physician_id": physician.user_id, "isBooked": False}
         )
+
+        filtered_appointments = [appointment for appointment in physician_appointments if appointment.start_date_time.date() >= current_date]
+
         appointments.append({
-            "physician": {
-                "user_id": physician.user_id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "phone_number": physician.phone_number,
-                "birth_date": physician.birth_date,
-                "sex": physician.sex
-            }, 
-            "appointments": physician_appointments
+            "user_id": physician.user_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone_number": physician.phone_number,
+            "birth_date": physician.birth_date,
+            "sex": physician.sex,
+            "appointments": filtered_appointments
         })
     
     return appointments
