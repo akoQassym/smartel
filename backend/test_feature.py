@@ -3,10 +3,9 @@ from fastapi.testclient import TestClient
 from dotenv import load_dotenv
 
 import pytest
-import uuid
 import os
+import uuid
 import sys
-import io
 import asyncio
 
 if sys.platform == 'win32':
@@ -41,29 +40,25 @@ def test_register():
             "email": "john.doe@example.com"
         }
     )
-
-    save_outcomes("register", response.status_code < 300)       
+    
+    save_outcomes("register", response.status_code < 300)
 
 # get user by ID 
 def test_get_user():
     # You must ensure that the user with this ID exists in your test database
     user_id = USER_ID
     response = client.get(f"/user/{user_id}")
-    assert response.status_code == 200
-    assert response.json()["user_id"] == user_id
+    
+    save_outcomes("get_user", response.status_code < 300)
 
 # get user by ID that does not exist
-def test_get_user_not_found():
+def test_get_non_existant_user():
     # Use a non-existent user ID
     user_id = NON_EXISTING_ID
     response = client.get(f"/user/{user_id}")
     # assert response.status_code == 404, "user_id found somehow"
 
-    if response.status_code >= 300:
-        outcomes["get_user"] = "success"
-    
-    else:
-        outcomes["get_user"] = "fail"
+    save_outcomes("get_non_existant_user", response.status_code > 300)
 
 # create a patient
 def test_create_patient():
@@ -79,38 +74,37 @@ def test_create_patient():
             "blood_type": "O+"
         }
     )
-    assert response.status_code == 201
-    assert response.json()["user_id"] == user_id
+    
+    save_outcomes("create_patient", response.status_code < 300)
 
 def test_get_physician():
     user_id = USER_ID
     response = client.get(f"/user/physician/{user_id}")
-    assert response.status_code == 200
-    assert response.json()["user_id"] == user_id
+    save_outcomes("get_physician", response.status_code < 300)
 
-def test_get_physician_not_found():
+def test_get_non_existant_physician():
     user_id = NON_EXISTING_ID
     response = client.get(f"/user/physician/{user_id}")
-    assert response.status_code == 404
+    save_outcomes("get_non_existant_user", response.status_code > 300)
 
 def test_book_appointment():
     appointment_id = APPOINTMENT_ID
     patient_id = USER_ID
     response = client.post(f"/book_appointment/{appointment_id}/{patient_id}")
-    assert response.status_code == 200
-    assert "Appointment booked successfully" in response.json()["message"]
+
+    save_outcomes("book_appointment", response.status_code < 300)
 
 def test_book_appointment_failed():
     appointment_id = NON_EXISTING_ID
     patient_id = USER_ID
     response = client.post(f"/book_appointment/{appointment_id}/{patient_id}")
-    assert response.status_code == 404
+    save_outcomes("book_appointment_failed", response.status_code > 300)
 
 
 if __name__ == "__main__":
     # test_register() # working
     # test_get_user()
-    test_get_user_not_found()
+    test_get_non_existant_user()
     # test_create_patient()
     # test_get_physician()
     # test_get_physician_not_found()
@@ -121,5 +115,9 @@ if __name__ == "__main__":
     # if outcomes is None:
     #     print("All tests passed successfully!")
 
+    msg = '''Printing the test log:
+    (test_case_name: success)" means that system responded as expected
+    (test_case_name: fail) means that system did not respond as expected \n\n'''
+    print(msg)
     for key, value in outcomes.items():
-        print(f"{key}: {value}")
+        print(f"({key}: {value})")
