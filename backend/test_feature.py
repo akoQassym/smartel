@@ -7,7 +7,7 @@ def test_register():
     response = client.post(
         "/register",
         json={
-            "user_id": "unique_user_id02",
+            "user_id": "testing_script_id",
             "first_name": "John",
             "last_name": "Doe",
             "email": "john.doe@example.com"
