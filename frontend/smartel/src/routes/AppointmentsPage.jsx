@@ -39,7 +39,7 @@ function AppointmentsPage() {
       const data = await res.json();
       return data;
     } catch (error) {
-      throw new Error(`Failed to fetch specializations: ${error.message}`);
+      throw new Error(`Failed to fetch appointments: ${error.message}`);
     }
   }
 
@@ -147,9 +147,9 @@ function AppointmentsPage() {
       <div>
         <NavBar linksArray={patientNavLinks} />
         <div className="px-10 py-3">
-          <div className="text-center font-montserrat text-4xl my-6 text-blue-950">
+          <h1 className="text-center font-montserrat text-4xl my-6 text-blue-950">
             Book an appointment
-          </div>
+          </h1>
           {loading ? 
             <LoadingPage />
           :
