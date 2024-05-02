@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SignIn, useUser, useSession } from "@clerk/clerk-react";
 import RouteButton from "../components/RouteButton";
 import { checkUserRole } from "../utils/checkUserRole";
