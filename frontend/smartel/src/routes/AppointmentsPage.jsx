@@ -55,9 +55,13 @@ function AppointmentsPage() {
     }
   };
 
-  const mapAppointmentsToEvents = (data) => (
-    data?.flatMap(physician => (
-      physician.appointments?.map(appointment => {
+  const mapAppointmentsToEvents = (data, filter = null) => (
+    data?.flatMap(physician => {
+      if (filter && filter != physician.user_id) {
+        return null
+      }
+
+      return physician.appointments?.map(appointment => {
         const startDate = convertToDateObject(appointment.start_date_time);
         if (!startDate) {
           return null;
@@ -70,11 +74,14 @@ function AppointmentsPage() {
           appointment_id: appointment.appointment_id,
         };
       }) || []
-    )).filter(event => event !== null)
+    }).filter(event => event !== null)
   );
 
   const selectPhysician = (physician_id) => {
-    setFilterPhysician((filterPhysician && filterPhysician == physician_id) ? null : physician_id);
+    const res = (filterPhysician && filterPhysician == physician_id) ? null : physician_id;
+    console.log("res", res);
+    setFilterPhysician(res);
+    setCalendarEvents(mapAppointmentsToEvents(appointments, res));
   }
 
   const bookAppointment = async () => {
@@ -93,6 +100,7 @@ function AppointmentsPage() {
     try {
       setAppointmentsLoading(true);
       const data = await getAvailableAppointments(selectedSpecialization.value);
+      console.log(data);
       setAppointments(data);
       setCalendarEvents(mapAppointmentsToEvents(data));
     } catch (error) {
@@ -165,10 +173,16 @@ function AppointmentsPage() {
                 </div>
                 <div className="mt-5 max-h-full">
                   <p className="font-montserrat text-md mb-2 font-bold">Available physicians</p>
-                  {appointments && appointments.map(physician => (
-                    <div key={physician.physician_id} onClick={selectPhysician.bind(this, physician.physician_id)} className={`my-3 py-3 px-3 bg-gray-100 rounded-md ${physician.appointments.length === 0 ? 'opacity-20' : 'cursor-pointer hover:shadow-md'}`}>
-                      <p>{physician.first_name} {physician.last_name} ({physician.sex})</p>
-                    </div>
+                  {appointments && appointments.map((physician, key) => (
+                    physician.appointments.length > 0 && (
+                      <div 
+                      key={key} 
+                      onClick={() => selectPhysician(physician.user_id)} 
+                      className={`my-3 py-3 px-3 bg-gray-100 rounded-md cursor-pointer hover:shadow-md ${filterPhysician === physician.user_id ? 'border-blue-500 border-2' : ''}`}
+                      >
+                        <p>{physician.first_name} {physician.last_name} ({physician.sex})</p>
+                      </div>
+                    )
                   ))}
                 </div>
               </div> 
