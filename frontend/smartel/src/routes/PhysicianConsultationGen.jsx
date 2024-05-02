@@ -12,8 +12,9 @@ function PhysicianConsultationGen() {
   const [loading, setLoading] = useState(false);
   const [appointmentID, setAppointmentID] = useState(null);
   const [appointments, setAppointments] = useState(null);
-  const [consultationID, setConsultationID] = useState(null);
+  const [summaryDocID, setSummaryDocID] = useState(null);
   const [summaryText, setSummaryText] = useState(null);
+  const [editedSummaryText, setEditedSummaryText] = useState("");
   const { isLoaded, session } = useSession(); // You get role information from session
   const [transcribedText, setTranscribedText] = useState(""); // For displaying transcription
   const [audioElement, setAudioElement] = useState(null); // For audio player
@@ -84,7 +85,7 @@ function PhysicianConsultationGen() {
       );
       const data = await res.json();
       // setTranscribedText(data.transcription);
-      setConsultationID(data[0]?.summary_doc_id);
+      setSummaryDocID(data[0]?.summary_doc_id);
       console.log(data[0]?.summary_doc_id);
     } catch (error) {
       console.log("Error making fetch request", error);
@@ -100,9 +101,10 @@ function PhysicianConsultationGen() {
 
   const handleGenerateSummary = async () => {
     setLoading(true);
+    setSummaryText(null);
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/summarize_transcription/${consultationID}`,
+        `http://127.0.0.1:8000/summarize_transcription/${summaryDocID}`,
         {
           method: "POST",
         }
@@ -112,11 +114,49 @@ function PhysicianConsultationGen() {
         const data = await res.json();
         console.log(data);
         setSummaryText(data.summary);
+        setEditedSummaryText(data.summary);
       }
     } catch (error) {
       console.log("Error generating summary", error);
     }
     setLoading(false);
+  };
+
+  // Handle sending edited summary text to backend
+  const handleConfirmEdit = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        "appointment_id": appointmentID,
+        "transcription": "",
+        "markdown_summary": editedSummaryText,
+      };
+      const res = await fetch(
+        `http://127.0.0.1:8000/review_edit_summary_doc/${summaryDocID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (res.ok) {
+        console.log("Edited summary sent successfully");
+        const data = await res.json();
+        console.log(data);
+      }
+    } catch (error) {
+      console.log("Error sending edited summary", error);
+    }
+    setLoading(false);
+  };
+
+  const handleDone = () => {
+    setEditedSummaryText(null);
+    setAudioElement(null);
+    setSummaryDocID(null);
+    setSummaryText(null);
   };
 
   return (
@@ -185,7 +225,7 @@ function PhysicianConsultationGen() {
                       </>
                     )}
                   </div>
-                  {consultationID && (
+                  {summaryDocID && (
                     <div className="flex justify-center mt-8">
                       <button
                         className="w-fit h-fit px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-300"
@@ -200,11 +240,35 @@ function PhysicianConsultationGen() {
                       <h1 className="text-center mt-8 text-lg text-blue-950">
                         Summary:
                       </h1>
-                      <div className="flex justify-center mt-4">
-                        <div className="h-fit w-2/3 p-4 bg-slate-100 text-black rounded-md mb-8">
-                          {summaryText}
-                        </div>
-                      </div>
+                      {editedSummaryText !== null ? (
+                        <>
+                          <div className="flex justify-center mt-4">
+                            <textarea
+                              className="w-2/3 h-48 p-4 bg-slate-100 text-black rounded-md mb-8"
+                              value={editedSummaryText}
+                              onChange={(e) =>
+                                setEditedSummaryText(e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="flex justify-center mt-4">
+                            <button
+                              className="w-fit h-fit px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-300"
+                              onClick={handleConfirmEdit}
+                            >
+                              Confirm Changes
+                            </button>
+                            <button
+                              className="w-fit h-fit px-4 py-2 mx-4 bg-green-500 text-white rounded-md hover:bg-green-300"
+                              onClick={handleDone}
+                            >
+                              Done
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <></>
+                      )}
                     </>
                   )}
                 </>

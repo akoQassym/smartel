@@ -13,6 +13,48 @@ function PhysicianDashboard() {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState("");
 
+  const checkIfRegistered = async () => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/user/${user.id}`, {
+        method: "GET",
+      });
+      const data = await res.json();
+
+      return data !== null;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Register user if record doesn't exist on backend (first time login)
+  const register = async () => {
+    const dataToRegister = {
+      "user_id": user.id,
+      "first_name": user.firstName,
+      "last_name": user.lastName,
+      "email": user.primaryEmailAddress.emailAddress,
+    };
+    console.log(dataToRegister);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/register", {
+        method: "POST", // Specify the HTTP method
+        headers: {
+          "Content-Type": "application/json", // Specify content type as JSON
+        },
+        body: JSON.stringify(dataToRegister), // Convert data to JSON string
+      });
+      if (!res.ok) {
+        console.log(res);
+        throw new Error("Failed to register user");
+      }
+
+      const responseData = await res.json(); // Parse response JSON
+      console.log("User registered successfully:", responseData);
+    } catch (error) {
+      console.error("Error registering user:", error);
+    }
+  };
+
   const checkIfPhysicianRegistered = async () => {
     try {
       const res = await fetch(
@@ -43,8 +85,14 @@ function PhysicianDashboard() {
   useEffect(() => {
     setLoading(true);
     const fetchData = async () => {
-      const isReg = await checkIfPhysicianRegistered();
+      const isReg = await checkIfRegistered();
       if (!isReg) {
+        await register();
+      } else {
+        console.log("User already registered");
+      }
+      const isPhysicianReg = await checkIfPhysicianRegistered();
+      if (!isPhysicianReg) {
         navigate("/physicianProfileCompletion"); // go to physician registration page
       } else {
         console.log("Physician already registered");

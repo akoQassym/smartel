@@ -338,9 +338,14 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
 
 
 @app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
-async def review_summary_doc(summary_doc_id: str, summary_doc_data: SummaryDocumentCreateModel):
-    updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
-    return updated_document
+async def review_summary_doc(summary_doc_id: str, summary_data: SummaryDocumentCreateModel):
+    # updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
+    # return updated_document
+    try:
+        updated_document = await crud_summary_document.update({"markdown_summary": summary_data.markdown_summary}, async_session, {"summary_doc_id": summary_doc_id})
+        return updated_document
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 '''
     done: create_user(user_id, email)
