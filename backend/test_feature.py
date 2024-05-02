@@ -7,12 +7,13 @@ def test_register():
     response = client.post(
         "/register",
         json={
-            "user_id": "unique_user_id",
+            "user_id": "unique_user_id02",
             "first_name": "John",
             "last_name": "Doe",
             "email": "john.doe@example.com"
         }
     )
+
     assert response.status_code == 200
     assert response.json() == {"message": "User created successfully"}
 
@@ -83,3 +84,14 @@ def test_book_appointment_failed():
     response = client.post(f"/book_appointment/{appointment_id}/{patient_id}")
     assert response.status_code == 404
 
+
+if __name__ == "__main__":
+    test_register()
+    # test_get_user()
+    # test_get_user_not_found()
+    # test_create_patient()
+    # test_get_physician()
+    # test_get_physician_not_found()
+    # test_book_appointment()
+    # test_book_appointment_failed()
+    # print("All tests passed successfully!")
