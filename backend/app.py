@@ -14,8 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
-from sqlalchemy import or_
+from sqlalchemy import or_, not_
 from datetime import datetime, timedelta
+from typing import Dict, List, Any
 
 import openai
 import uuid
@@ -276,8 +277,7 @@ async def summarize_transcription(summary_doc_id: str):
     result = await crud_summary_document.get_one(async_session, filter={"summary_doc_id": summary_doc_id})
     transcription = result.transcription
     systemMessage = f'''
-        You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
-        and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
+        You will be provided with a transcription of a consultation session between a patient and a doctor. Please analyze the transcription that is provided.
     '''
     userMessage = f'''
         <transcription> {transcription} </transcription>
@@ -288,7 +288,8 @@ async def summarize_transcription(summary_doc_id: str):
         3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
         4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
 
-        Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
+        Please write 150 words for each section of the summary. If the information is not available, please write "Upon further examination".
+        Please present the result in a markdown format with the appropriate ## for each section header. And separate each section with a new line.
     '''
 
     try:
@@ -335,8 +336,7 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
     
     # Get the summary 
     systemMessage = f'''
-        You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
-        and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
+        You will be provided with a transcription of a consultation session between a patient and a doctor. Please analyze the transcription that is provided.
     '''
     userMessage = f'''
         <transcription> {transcription} </transcription>
@@ -347,7 +347,8 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
         3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
         4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
 
-        Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
+        Please write 150 words for each section of the summary. If the information is not available, please write "Upon further examination".
+        Please present the result in a markdown format with the appropriate ## for each section header. And separate each section with a new line.
     '''
 
     try:
@@ -376,8 +377,6 @@ async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile =
 
 @app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
 async def review_summary_doc(summary_doc_id: str, summary_data: SummaryDocumentCreateModel):
-    # updated_document = await crud_summary_document.update(summary_doc_id, summary_doc_data.dict(exclude_unset=True), async_session)
-    # return updated_document
     try:
         updated_document = await crud_summary_document.update({"markdown_summary": summary_data.markdown_summary}, async_session, {"summary_doc_id": summary_doc_id})
         return updated_document
@@ -389,22 +388,20 @@ from sqlalchemy import or_
 @app.get('/get_summary_documents/{patient_id}', status_code=HTTPStatus.OK)
 async def get_summary_documents(patient_id: str):
     try:
-        # Get all appointments associated with the patient_id
         appointments = await crud_appointment.get_all(async_session, filter={"patient_id": patient_id})
-        
-        # Extract appointment IDs from the appointments
-        appointment_ids = [appointment.appointment_id for appointment in appointments]
-        
-        # Get all summary documents associated with the extracted appointment IDs
-        summary_documents = await crud_summary_document.get_all(
-            async_session, 
-            filter=or_(SummaryDocument.appointment_id == appointment_id for appointment_id in appointment_ids)
-        )
-        
-         # Filter out elements with null markdown_summary
-        summary_documents_filtered = [doc for doc in summary_documents if doc.markdown_summary is not None]
-        
-        return summary_documents_filtered
+        res = []
+        for a in appointments:
+            docs = await crud_summary_document.get_all(async_session, filter={"appointment_id": a.appointment_id})
+            input = []
+            for d in docs:
+                if d.markdown_summary:
+                    input.append({
+                        "appointment_details": a,
+                        "summary_details":  d
+                    })
+            res.extend(input)
+
+        return (res)
     except Exception as e:
         print(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
