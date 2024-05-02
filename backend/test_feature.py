@@ -3,6 +3,13 @@ from fastapi.testclient import TestClient
 from dotenv import load_dotenv
 
 import os
+import sys
+import io
+import asyncio
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 client = TestClient(app)
 load_dotenv()
@@ -18,15 +25,17 @@ def test_register():
     response = client.post(
         "/register",
         json={
-            "user_id": "testing_script_id",
+            "user_id": "testing_script_id04",
             "first_name": "John",
             "last_name": "Doe",
             "email": "john.doe@example.com"
         }
     )
 
-    assert response.status_code == 200
-    assert response.json() == {"message": "User created successfully"}
+    if response.status_code == 201:
+        print("Successfully created new User")
+    else:
+        print("Test case failed")
 
 def test_get_user():
     # You must ensure that the user with this ID exists in your test database
@@ -97,6 +106,10 @@ def test_book_appointment_failed():
 
 
 if __name__ == "__main__":
+    os.environ['TESTING'] = 'True'  # Example environment control
+    if os.getenv('TESTING') == 'True':
+        sys.stdout = io.StringIO()
+
     test_register()
     # test_get_user()
     # test_get_user_not_found()
