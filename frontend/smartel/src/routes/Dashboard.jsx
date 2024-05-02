@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser, useSession, useOrganization } from "@clerk/clerk-react";
 import { checkUserRole } from "../utils/checkUserRole";
 import NavBar from "../components/NavBar";

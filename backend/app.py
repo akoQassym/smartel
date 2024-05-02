@@ -15,6 +15,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
 from sqlalchemy import or_
+from datetime import datetime, timedelta
 
 import openai
 import uuid
@@ -172,6 +173,41 @@ async def add_appointment(physician_id: str, appointment_data: AppointmentCreate
 
     appointment = await crud_appointment.create(new_appointment, async_session)
     return appointment
+
+@app.get('/get_available_appointments/{specialization_id}', status_code=HTTPStatus.OK)
+async def get_appointments(specialization_id: str):
+    physicians = await crud_physician.get_all(
+        async_session, 
+        filter = {"specialization_id": specialization_id}
+    )
+    
+    if not physicians:
+        raise HTTPException(404, "No physicians found with the given specialization ID")
+
+    appointments = []
+    for physician in physicians:
+        user = await crud_user.get_one(async_session, filter={"user_id": physician.user_id})
+
+        current_date = datetime.now().date()
+
+        physician_appointments = await crud_appointment.get_all(
+            async_session, 
+            filter={"physician_id": physician.user_id, "isBooked": False}
+        )
+
+        filtered_appointments = [appointment for appointment in physician_appointments if appointment.start_date_time.date() >= current_date]
+
+        appointments.append({
+            "user_id": physician.user_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone_number": physician.phone_number,
+            "birth_date": physician.birth_date,
+            "sex": physician.sex,
+            "appointments": filtered_appointments
+        })
+    
+    return appointments
 
 @app.get('/get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
