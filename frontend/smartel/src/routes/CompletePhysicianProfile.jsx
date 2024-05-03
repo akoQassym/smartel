@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser, useSession, useOrganization } from "@clerk/clerk-react";
 import NavBar from "../components/NavBar";
 import { useNavigate } from "react-router-dom";
@@ -63,16 +63,71 @@ function CompletePhysicianProfile() {
     setLoading(false);
   };
 
-  // To get specialization IDs
-  useEffect(() => {
-    const getData = async () => {
-      const res = await fetch(`http://127.0.0.1:8000/get_specializations`, {
+  const checkIfRegistered = async () => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/user/${user.id}`, {
         method: "GET",
       });
       const data = await res.json();
-      setSpecializationIDs(data);
-      console.log("Specialization IDs set", data);
-      console.log(data[0].specialization_id);
+
+      return data !== null;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Register user if record doesn't exist on backend (first time login)
+  const register = async () => {
+    const dataToRegister = {
+      "user_id": user.id,
+      "first_name": user.firstName,
+      "last_name": user.lastName,
+      "email": user.primaryEmailAddress.emailAddress,
+    };
+    console.log(dataToRegister);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/register", {
+        method: "POST", // Specify the HTTP method
+        headers: {
+          "Content-Type": "application/json", // Specify content type as JSON
+        },
+        body: JSON.stringify(dataToRegister), // Convert data to JSON string
+      });
+      if (!res.ok) {
+        console.log(res);
+        throw new Error("Failed to register user");
+      }
+
+      const responseData = await res.json(); // Parse response JSON
+      console.log("User registered successfully:", responseData);
+    } catch (error) {
+      console.error("Error registering user:", error);
+    }
+  };
+
+  // To get specialization IDs
+  useEffect(() => {
+    setLoading(true);
+    const getData = async () => {
+      try {
+        const isReg = await checkIfRegistered();
+        if (!isReg) {
+          await register();
+        } else {
+          console.log("User already registered");
+        }
+        const res = await fetch(`http://127.0.0.1:8000/get_specializations`, {
+          method: "GET",
+        });
+        const data = await res.json();
+        setSpecializationIDs(data);
+        console.log("Specialization IDs set", data);
+        console.log(data[0].specialization_id);
+        setLoading(false);
+      } catch (error) {
+        console.log("Error", error);
+        setLoading(false);
+      }
     };
     getData();
   }, []);
@@ -136,7 +191,9 @@ function CompletePhysicianProfile() {
                         </select>
                       </div>
                       <div className="flex justify-evenly">
-                        <label className="block mx-4 my-4">Sex:</label>
+                        <label className="block mx-4 my-4">
+                          Specialization:
+                        </label>
                         <select
                           className="h-fit p-1 my-auto rounded-md"
                           name="specialization_id"
@@ -145,13 +202,18 @@ function CompletePhysicianProfile() {
                           required={true}
                         >
                           <option value="0">Select</option>
-                          <option
-                            value={String(
-                              specializationIDs[0]?.specialization_id
-                            )}
-                          >
-                            Pediatrician
-                          </option>
+                          {specializationIDs.map((s) => {
+                            return (
+                              <>
+                                <option
+                                  value={String(s.specialization_id)}
+                                  key={s.specialization_id}
+                                >
+                                  {s.name}
+                                </option>
+                              </>
+                            );
+                          })}
                         </select>
                       </div>
                       <div className="flex justify-center mt-5">

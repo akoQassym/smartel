@@ -4,17 +4,24 @@
 
 # standard library
 from http.client import HTTPException
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Query, Body, Request
+import tempfile
+from fastapi import File, UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from http import HTTPStatus
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-import uuid
+from dotenv import load_dotenv
+from openai import OpenAI
+from sqlalchemy import or_, not_
+from datetime import datetime, timedelta
+from typing import Dict, List, Any
+
 import openai
+import uuid
 import httpx
 import asyncio
-from dotenv import load_dotenv
 import os 
 
 # local library
@@ -23,9 +30,13 @@ from base import engine
 from models import User, Patient, Physician, Specialization, Appointment, SummaryDocument
 from schemas import UserCreateModel, PatientCreateModel, PhysicianCreateModel, SpecializationCreateModel, AppointmentCreateModel, SummaryDocumentCreateModel
 
-
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_KEY")
+
+if OPENAI_KEY is None:
+    raise ValueError("OPENAI_KEY not found in environment variables")
+
+openAIClient = OpenAI(api_key=OPENAI_KEY)
 
 app = FastAPI(
     title = "Smartel API",
@@ -36,21 +47,18 @@ app = FastAPI(
 # Allow requests from all origins with appropriate methods and headers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can specify specific origins instead of "*" for production
+    allow_origins=["http://localhost:5173", "*"],  # You can specify specific origins instead of "*" for production
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
-session = async_sessionmaker(
+async_session = async_sessionmaker(
         bind = engine,
         expire_on_commit = False,
     )
 
-# here use the CRUD class to interact with the database initializing class takes
-# a good amount of time, so it is preferable to create a global instance to use
-# it throughout the application
-# crud_user = CRUD()
+# creating instances of CRUD for each model
 crud_user = CRUD(User)
 crud_patient = CRUD(Patient)
 crud_physician = CRUD(Physician)
@@ -62,7 +70,6 @@ crud_summary_document = CRUD(SummaryDocument)
 async def root():
     return {"message": "Hello World"}
 
-
 # ------ APIS FOR USERS ------ #
 @app.post('/register', status_code=HTTPStatus.CREATED)
 async def create_user(user_data: UserCreateModel): 
@@ -73,17 +80,17 @@ async def create_user(user_data: UserCreateModel):
         email = user_data.email,
     )
 
-    user = await crud_user.create(new_user, session)
+    user = await crud_user.create(new_user, async_session)
     return user
 
 @app.get('/user/{user_id}', status_code=HTTPStatus.OK)
 async def get_user(user_id: str):
-    res = await crud_user.get_one(user_id, session)
+    res = await crud_user.get_one(async_session, filter = {"user_id": user_id})
     return res
 
 @app.get('/user/patient/{user_id}', status_code=HTTPStatus.OK)
 async def get_patient(user_id: str):
-    res = await crud_patient.get_one(user_id, session)
+    res = await crud_patient.get_one(async_session, filter = {"user_id": user_id})
     return res
 
 @app.post('/register/patient/{user_id}', status_code=HTTPStatus.CREATED)
@@ -98,12 +105,12 @@ async def create_patient(user_id: str, patient_data: PatientCreateModel):
         blood_type = patient_data.blood_type,
     )
 
-    patient = await crud_patient.create(new_patient, session)
+    patient = await crud_patient.create(new_patient, async_session)
     return patient
 
 @app.get('/user/physician/{user_id}', status_code=HTTPStatus.OK)
 async def get_physician(user_id: str):
-    res = await crud_physician.get_one(user_id, session)
+    res = await crud_physician.get_one(async_session, filter = {"user_id": user_id})
     return res
 
 @app.post('/register/physician/{user_id}', status_code=HTTPStatus.CREATED)
@@ -116,10 +123,10 @@ async def create_physician(user_id: str, physician_data: PhysicianCreateModel):
         birth_date = physician_data.birth_date,
     )
 
-    physician = await crud_physician.create(new_physician, session)
+    physician = await crud_physician.create(new_physician, async_session)
     return physician
 
-@app.post('/edit/{user_id}', status_code=HTTPStatus.OK)
+@app.patch('/edit/{user_id}', status_code=HTTPStatus.OK)
 async def edit_user(
     user_id: str, 
     patient_data: Optional[PatientCreateModel] = Body(default=None),
@@ -128,13 +135,13 @@ async def edit_user(
 
     # Check and update patient
     if patient_data:
-        updated_patient = await crud_patient.update(user_id, patient_data.dict(exclude_unset=True), session)
+        updated_patient = await crud_patient.update(patient_data.dict(exclude_unset=True), async_session, {"user_id": user_id})
         if updated_patient:
             return {"message": "Patient updated successfully", "data": updated_patient}
     
     # Check and update physician
     if physician_data:
-        updated_physician = await crud_physician.update(user_id, physician_data.dict(exclude_unset=True), session)
+        updated_physician = await crud_physician.update(physician_data.dict(exclude_unset=True), async_session, {"user_id": user_id})
         if updated_physician:
             return {"message": "Physician updated successfully", "data": updated_physician}
 
@@ -148,12 +155,12 @@ async def add_spec(spec_data: SpecializationCreateModel):
         name = spec_data.name,
     )
 
-    spec = await crud_specialization.create(new_specialization, session)
+    spec = await crud_specialization.create(new_specialization, async_session)
     return spec
 
 @app.get('/get_specializations', status_code=HTTPStatus.OK)
 async def get_specializations():
-    specializations = await crud_specialization.get_all(session)
+    specializations = await crud_specialization.get_all(async_session)
     return specializations
 
 
@@ -165,34 +172,72 @@ async def add_appointment(physician_id: str, appointment_data: AppointmentCreate
         start_date_time = appointment_data.start_date_time,
     )
 
-    appointment = await crud_appointment.create(new_appointment, session)
+    appointment = await crud_appointment.create(new_appointment, async_session)
     return appointment
+
+@app.get('/get_available_appointments/{specialization_id}', status_code=HTTPStatus.OK)
+async def get_appointments(specialization_id: str):
+    physicians = await crud_physician.get_all(
+        async_session, 
+        filter = {"specialization_id": specialization_id}
+    )
+    
+    if not physicians:
+        raise HTTPException(404, "No physicians found with the given specialization ID")
+
+    appointments = []
+    for physician in physicians:
+        user = await crud_user.get_one(async_session, filter={"user_id": physician.user_id})
+
+        current_date = datetime.now().date()
+
+        physician_appointments = await crud_appointment.get_all(
+            async_session, 
+            filter={"physician_id": physician.user_id, "isBooked": False}
+        )
+
+        filtered_appointments = [appointment for appointment in physician_appointments if appointment.start_date_time.date() >= current_date]
+
+        appointments.append({
+            "user_id": physician.user_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone_number": physician.phone_number,
+            "birth_date": physician.birth_date,
+            "sex": physician.sex,
+            "appointments": filtered_appointments
+        })
+    
+    return appointments
 
 @app.get('/get_appointments/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
-    appointments = await crud_appointment.get_all(session, filter = {"physician_id": physician_id})
+    appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id})
+    return appointments
+
+@app.get('/get_appointments/isbooked/{physician_id}', status_code=HTTPStatus.OK)
+async def get_appointments(physician_id: str):
+    appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id, "isBooked": True})
     return appointments
 
 @app.post('/edit_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def edit_appointment(appointment_id: str, appointment_data: AppointmentCreateModel):
-    updated_appointment = await crud_appointment.update(appointment_id, appointment_data.dict(exclude_unset=True), session)
+    updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
     return updated_appointment
 
-@app.post('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+@app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
-    deleted = await crud_appointment.delete(appointment_id, session)
+    deleted = await crud_appointment.delete(appointment_id, async_session)
     return {"message": "Appointment deleted successfully", "data": deleted}
 
 @app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
 async def book_appointment(appointment_id: str, patient_id: str):
-    # Fetch the current appointment details
-    appointment = await crud_appointment.get_one(appointment_id, session)
+    appointment = await crud_appointment.get_one(async_session, filter = {"appointment_id": appointment_id})
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
-    # Update the appointment attributes
     update_data = {'isBooked': True, 'patient_id': patient_id}
-    updated_appointment = await crud_appointment.update(appointment_id, update_data, session)
+    updated_appointment = await crud_appointment.update(update_data, async_session, {"appointment_id": appointment_id})
     
     if not updated_appointment:
         raise HTTPException(status_code=404, detail="Failed to update the appointment")
@@ -200,19 +245,41 @@ async def book_appointment(appointment_id: str, patient_id: str):
     return {"message": "Appointment booked successfully", "appointment": updated_appointment}
 
 # ------ APIS FOR GENERATING DOCUMENTS ------ #
-@app.post('transcribe_audio', status_code=HTTPStatus.CREATED)
-async def transcribe_audio(audio_blob: str):
-    pass
+@app.post('/transcribe_audio/{appointment_id}', status_code=HTTPStatus.CREATED)
+async def transcribe_audio(appointment_id : str, audio_file: UploadFile = File(...)):
+    try:
+        # Create a temporary file to save the uploaded audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
+            # Write the audio data from the blob to the temporary file
+            temp_audio_file.write(await audio_file.read())
+            temp_audio_file.close()
 
-@app.post('/summarize_transcription/{document_id}', status_code=HTTPStatus.OK)
-async def summarize_transcription(document_id: str):
-    transcription = await crud_summary_document.get_one(document_id)
-    
-    # Create a prompt for the OpenAI API
-    prompt = f'''
-        You will be provided with a transcription (delimited with XML tags) of a consultation session between a patient 
-        and a doctor, in particular, P refers to the patient and D refers to the doctor. The transcription is as follows:
+            # Transcribe the audio using the OpenAI API
+            transcription = openAIClient.audio.transcriptions.create(
+                model="whisper-1", 
+                file=open(temp_audio_file.name, 'rb')
+            )
+            
+            new_summary_doc = SummaryDocument(
+                appointment_id = appointment_id,
+                transcription = transcription.text
+            )
+            summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
 
+            return {summary_doc}
+
+    except Exception as e:
+        print("error when transcribing", e)
+        raise HTTPException(status_code=404, detail="failed to transcribe")
+
+@app.post('/summarize_transcription/{summary_doc_id}', status_code=HTTPStatus.OK)
+async def summarize_transcription(summary_doc_id: str):
+    result = await crud_summary_document.get_one(async_session, filter={"summary_doc_id": summary_doc_id})
+    transcription = result.transcription
+    systemMessage = f'''
+        You will be provided with a transcription of a consultation session between a patient and a doctor. Please analyze the transcription that is provided.
+    '''
+    userMessage = f'''
         <transcription> {transcription} </transcription>
 
         The summary of the transcription should include the following sections:
@@ -221,75 +288,123 @@ async def summarize_transcription(document_id: str):
         3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
         4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
 
-        Please write 150 words for each section of the summary. If the information is not available, please write "Information not available".
+        Please write 150 words for each section of the summary. If the information is not available, please write "Upon further examination".
+        Please present the result in a markdown format with the appropriate ## for each section header. And separate each section with a new line.
     '''
 
-    # Using OpenAI to generate a summary
     try:
-        response = await httpx.post(
-            "https://api.openai.com/v1/engines/davinci-codex/completions",
-            headers={
-                "Authorization": f"Bearer {OPENAI_KEY}"
-            },
-            json={
-                "prompt": prompt,
-                "max_tokens": 150  # Adjust based on your needs
-            }
-        )
-        response.raise_for_status()
-        summary = response.json()['choices'][0]['text'].strip()
-        return {"summary": summary}
+        print("Requesting OpenAI API")
+        async with httpx.AsyncClient() as client:
+            response = openAIClient.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": systemMessage},
+                    {"role": "user", "content": userMessage}
+                ]
+            )
+            # update the summary document with the summary
+            content = response.choices[0].message.content
+            try:
+                await crud_summary_document.update({"markdown_summary": content}, async_session, {"summary_doc_id": summary_doc_id})
+            except Exception as e:
+                print(f"An error occurred: {e}")
+            print(response)
+            return({"summary" : response.choices[0].message.content})
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
     
-    except httpx.HTTPError as error:
-        raise HTTPException(status_code=error.response.status_code, detail="Failed to generate summary")
-
-
-# ------ APIS FOR LOCAL USE ------ #
-async def load_transcriptions(directory_path: str):
-    print("Function called")
-    # Path object for the directory
-    from pathlib import Path
-
-    path = Path(directory_path)
-
-    print(f"Loading transcriptions from {path}")
-
-    counter = 0
-    if not path.exists():
-        print(f"Directory {path} does not exist")
-        return
-    
+@app.post("/transcribe_and_summarize/{appointment_id}", status_code=HTTPStatus.CREATED)
+async def transcribe_and_summarize(appointment_id: str, audio_file: UploadFile = File(...)):
+    # Transcribe the audio
     try:
-        # Iterate over text files in the directory
-        for file_path in path.glob('*.txt'):  # Adjust the pattern if necessary
-            counter += 1
-            if counter > 10:
-                break
+        # Create a temporary file to save the uploaded audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
+            # Write the audio data from the blob to the temporary file
+            temp_audio_file.write(await audio_file.read())
+            temp_audio_file.close()
+
+            # Transcribe the audio using the OpenAI API
+            transcription = openAIClient.audio.transcriptions.create(
+                model="whisper-1", 
+                file=open(temp_audio_file.name, 'rb')
+            )
             
-            # create a dummy string for the appointment_id
-            appointment_id = "appointment_id_" + str(counter)
-            appointment_id = str(uuid.uuid4())
-            # Read the content of each file
-            with open(file_path, 'r', encoding='utf-8') as file:
-                transcription = file.read()
+    except Exception as e:
+        print("error when transcribing", e)
+        raise HTTPException(status_code=404, detail="failed to transcribe")
+    
+    # Get the summary 
+    systemMessage = f'''
+        You will be provided with a transcription of a consultation session between a patient and a doctor. Please analyze the transcription that is provided.
+    '''
+    userMessage = f'''
+        <transcription> {transcription} </transcription>
 
-            # Create an instance of SummaryDocument
-            summary_document = SummaryDocument(
-                transcription = transcription,
-                appointment_id = appointment_id  # This needs to be obtained or set appropriately
+        The summary of the transcription should include the following sections:
+        1. Reason for Consultation: This section sets the stage for the entire visit and should succinctly describe why the patient sought medical attention.
+        2. Examination Findings: This section documents the findings from the physical examination and any diagnostic tests ordered during the consultation. 
+        3. Assessment and Plan: This critical section provides a summary of the healthcare provider’s clinical assessment and the planned course of action. 
+        4. Conclusion: The conclusion summarizes the consultation and outlines the follow-up plan.
+
+        Please write 150 words for each section of the summary. If the information is not available, please write "Upon further examination".
+        Please present the result in a markdown format with the appropriate ## for each section header. And separate each section with a new line.
+    '''
+
+    try:
+        print("Requesting OpenAI API")
+        async with httpx.AsyncClient() as client:
+            response = openAIClient.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": systemMessage},
+                    {"role": "user", "content": userMessage}
+                ]
             )
 
-            print(f"Appointment ID: {summary_document.appointment_id} is loaded into the database")
-
-            # Use the CRUD class to save the transcription to the database
-            await crud_summary_document.create(summary_document, session)
-
-            print("Transcription loaded successfully")
-    
     except Exception as e:
         print(f"An error occurred: {e}")
 
-asyncio.run(load_transcriptions('./data/clean_transcript/'))
+    new_summary_doc = SummaryDocument(
+        appointment_id = appointment_id,
+        transcription = transcription.text,
+        markdown_summary = response.choices[0].message.content,
+    )
+
+    summary_doc = await crud_summary_document.create(new_summary_doc, async_session)
+    return summary_doc
+
+
+@app.post('/review_edit_summary_doc/{summary_doc_id}', status_code=HTTPStatus.CREATED)
+async def review_summary_doc(summary_doc_id: str, summary_data: SummaryDocumentCreateModel):
+    try:
+        updated_document = await crud_summary_document.update({"markdown_summary": summary_data.markdown_summary}, async_session, {"summary_doc_id": summary_doc_id})
+        return updated_document
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+from sqlalchemy import or_
+
+@app.get('/get_summary_documents/{patient_id}', status_code=HTTPStatus.OK)
+async def get_summary_documents(patient_id: str):
+    try:
+        appointments = await crud_appointment.get_all(async_session, filter={"patient_id": patient_id})
+        res = []
+        for a in appointments:
+            docs = await crud_summary_document.get_all(async_session, filter={"appointment_id": a.appointment_id})
+            input = []
+            for d in docs:
+                if d.markdown_summary:
+                    input.append({
+                        "appointment_details": a,
+                        "summary_details":  d
+                    })
+            res.extend(input)
+
+        return (res)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 '''
@@ -306,5 +421,5 @@ asyncio.run(load_transcriptions('./data/clean_transcript/'))
     done: delete_appointment(appointment_id)
     done: book_appointment(appointment_id)
     transcribe_audio(audio_blob)
-    summarize_transcription(document_id)
+    summarize_transcription(summary_doc_id)
 '''
