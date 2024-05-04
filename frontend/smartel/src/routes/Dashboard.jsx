@@ -175,7 +175,7 @@ function Dashboard() {
                       <p><strong>{new Date(appointment.start_date_time).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(appointment.start_date_time).toLocaleTimeString('en-GB')}</strong></p>
                       <p>{appointment.physician_name} {appointment.physician_surname}</p>
                       <p>{appointment.phone_number}</p>
-                      <Button className="mt-6" onClick={cancelAppointment.bind(this, appointment.appointment_id)}>Cancel</Button>
+                      <Button bgColor="#DC2626" className="mt-6" onClick={cancelAppointment.bind(this, appointment.appointment_id)}>Cancel</Button>
                     </div>
                   ))}
                 </div>
