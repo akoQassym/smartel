@@ -12,9 +12,12 @@ function Profile() {
 
   const getUserData = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/${user.id}`, {
-        method: "GET",
-      });
+      const res = await fetch(
+        `${process.env.SMARTEL_BACKEND_API_URL}/user/${user.id}`,
+        {
+          method: "GET",
+        }
+      );
       const data = await res.json();
       setUserData(data);
       console.log("User data set successfully");
@@ -26,9 +29,12 @@ function Profile() {
 
   const getPatientData = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/patient/${user.id}`, {
-        method: "GET",
-      });
+      const res = await fetch(
+        `${process.env.SMARTEL_BACKEND_API_URL}/user/patient/${user.id}`,
+        {
+          method: "GET",
+        }
+      );
       const data = await res.json();
       setPatientData(data);
       console.log("Patient data set");
