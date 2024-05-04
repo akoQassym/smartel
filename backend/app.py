@@ -249,6 +249,18 @@ async def edit_appointment(appointment_id: str, appointment_data: AppointmentCre
     updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
     return updated_appointment
 
+@app.post('/cancel_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def cancel_appointment(appointment_id: str):
+    appointment = await crud_appointment.get_one(async_session, filter={"appointment_id": appointment_id})
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    updated_data = {
+        "isBooked": False,
+        "patient_id": None
+    }
+    updated_appointment = await crud_appointment.update(updated_data, async_session, filter={"appointment_id": appointment_id})
+    return updated_appointment
+
 @app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
     deleted = await crud_appointment.delete(appointment_id, async_session)
