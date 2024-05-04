@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { useUser, useSession, useOrganization } from "@clerk/clerk-react";
+import { useUser, useSession } from "@clerk/clerk-react";
 import { checkUserRole } from "../utils/checkUserRole";
 import NavBar from "../components/NavBar";
 import { patientNavLinks } from "../utils/patientNavLinks";
 import LoadingPage from "../components/LoadingPage";
 import { useNavigate } from "react-router-dom";
+import { Button } from "../components";
 
 function Dashboard() {
   const [loading, setLoading] = useState(false);
+  const [appointments, setAppointments] = useState([]);
   const navigate = useNavigate(); // To redirect to patient registration page if not registered
   const { user } = useUser();
   const { isLoaded, session } = useSession();
@@ -69,6 +71,39 @@ function Dashboard() {
     }
   };
 
+  const getBookedAppointments = async (patient_id) => {
+    try {
+      const res = await fetch(`${process.env.SMARTEL_BACKEND_API_URL}/get_patient_appointments/${patient_id}`, {
+        method: "GET",
+      });
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to fetch appointments: ${error.message}`);
+    }
+  }
+
+  const updateBookingAppointment = async (appointment_id) => {
+    try {
+      const res = await fetch(`${process.env.SMARTEL_BACKEND_API_URL}/cancel_appointment/${appointment_id}`, {
+        method: "POST"
+      });
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to cancel the appointment: ${error.message}`);
+    }
+  }
+
+  const cancelAppointment = async (appointment_id) => {
+    try {
+      await updateBookingAppointment(appointment_id);
+      setAppointments(appointments.filter(appointment => appointment.appointment_id !== appointment_id));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   // To check if user is registered
   useEffect(() => {
     setLoading(true);
@@ -82,13 +117,22 @@ function Dashboard() {
       const isPatientReg = await checkIfPatientRegistered();
       console.log(isPatientReg, "is patient reg");
 
-      setLoading(false); // Set loading to false after the check is complete
       if (!isPatientReg) {
         console.log("navigating");
         navigate("/patientProfileCompletion");
       } else {
         console.log("patient already already registered");
       }
+
+      try {
+        const data = await getBookedAppointments(user.id);
+        console.log("DATA", data);
+        setAppointments(data);
+      } catch (error) {
+        console.log(error);
+        setAppointments([]);
+      }
+      setLoading(false); // Set loading to false after the check is complete
     };
     fetchData();
   }, []);
@@ -112,15 +156,29 @@ function Dashboard() {
               linksArray={patientNavLinks}
               showPhysicianLink={showPhysicianLink()}
             />
-            <div className="flex justify-center items-center h-screen">
-              <div className="block text-center px-12">
-                <h1 className="font-montserrat text-7xl mb-6 text-blue-950">
-                  Welcome to your dashboard {user?.firstName}
-                </h1>
-                <h1 className="font-montserrat text-blue-950 text-sm mb-6">
-                  Book appointments, upload medical documents, and view
-                  consultation reports.
-                </h1>
+            
+            <div className={appointments.length > 0 ? "py-8 px-10" : "flex justify-center items-center h-screen"}>
+              <div>
+                <div className="block text-center px-12 py-5">
+                  <h1 className={`font-montserrat ${appointments.length > 0 ? "text-4xl" : "text-7xl"} mb-6 text-blue-950`}>
+                    Welcome to your dashboard {user?.firstName}
+                  </h1>
+                  <h1 className="font-montserrat text-blue-950 text-sm mb-6">
+                    Book appointments, upload medical documents, and view
+                    consultation reports.
+                  </h1>
+                </div>
+                <div className="w-fit ml-auto mr-auto font-montserrat">
+                  <p className="font-bold">Upcoming appointments: {appointments.length}</p>
+                  {appointments?.length > 0 && appointments.map((appointment, key) => (
+                    <div key={key} className="w-[500px] p-6 my-3 py-3 px-3 bg-gray-100 rounded-md cursor-pointer hover:shadow-md">
+                      <p><strong>{new Date(appointment.start_date_time).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(appointment.start_date_time).toLocaleTimeString('en-GB')}</strong></p>
+                      <p>{appointment.physician_name} {appointment.physician_surname}</p>
+                      <p>{appointment.phone_number}</p>
+                      <Button className="mt-6" onClick={cancelAppointment.bind(this, appointment.appointment_id)}>Cancel</Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
