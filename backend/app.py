@@ -215,6 +215,30 @@ async def get_appointments(physician_id: str):
     appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id})
     return appointments
 
+@app.get('/get_patient_appointments/{patient_id}', status_code=HTTPStatus.OK)
+async def get_appointments(patient_id: str):
+    appointments = await crud_appointment.get_all(async_session, filter={"patient_id": patient_id})
+    if not appointments:
+        raise HTTPException(status_code=404, detail="No appointments found for this patient")   
+    current_date = datetime.now().date()
+    appointment_details = []
+    for appointment in appointments:
+        if appointment.start_date_time.date() >= current_date:
+            physician = await crud_physician.get_one(async_session, filter = {"user_id": appointment.physician_id})
+            user = await crud_user.get_one(async_session, filter={"user_id": physician.user_id})
+            if physician and user:
+                appointment_details.append({
+                    "appointment_id": appointment.appointment_id,
+                    "start_date_time": appointment.start_date_time,
+                    "physician_name": user.first_name,
+                    "physician_surname": user.last_name,
+                    "sex": physician.sex,
+                    "phone_number": physician.phone_number,
+                    "isBooked": appointment.isBooked
+                })
+
+    return appointment_details
+
 @app.get('/get_appointments/isbooked/{physician_id}', status_code=HTTPStatus.OK)
 async def get_appointments(physician_id: str):
     appointments = await crud_appointment.get_all(async_session, filter = {"physician_id": physician_id, "isBooked": True})
@@ -225,9 +249,21 @@ async def edit_appointment(appointment_id: str, appointment_data: AppointmentCre
     updated_appointment = await crud_appointment.update(appointment_data.dict(exclude_unset=True), async_session, {"appointment_id": appointment_id})
     return updated_appointment
 
+@app.post('/cancel_appointment/{appointment_id}', status_code=HTTPStatus.OK)
+async def cancel_appointment(appointment_id: str):
+    appointment = await crud_appointment.get_one(async_session, filter={"appointment_id": appointment_id})
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    updated_data = {
+        "isBooked": False,
+        "patient_id": None
+    }
+    updated_appointment = await crud_appointment.update(updated_data, async_session, filter={"appointment_id": appointment_id})
+    return updated_appointment
+
 @app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
-    deleted = await crud_appointment.delete(appointment_id, async_session)
+    deleted = await crud_appointment.delete(async_session, filter={"appointment_id": appointment_id})
     return {"message": "Appointment deleted successfully", "data": deleted}
 
 @app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)

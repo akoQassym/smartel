@@ -4,7 +4,7 @@ import { checkUserRole } from "../utils/checkUserRole";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import { physicianNavLinks } from "../utils/physicianNavLinks";
-import { CalendarView, LoadingPage, Modal } from "../components";
+import { Button, CalendarView, LoadingPage, Modal } from "../components";
 import convertToDateObject from "../utils/convertToDate";
 
 function PhysicianAppointments() {
@@ -49,6 +49,18 @@ function PhysicianAppointments() {
       return data;
     } catch (error) {
       throw new Error(`Failed to add the appointment: ${error.message}`);
+    }
+  }
+
+  const postDeleteAppointment = async (appointment_id) => {
+    try {
+      const res = await fetch(`${process.env.SMARTEL_BACKEND_API_URL}/delete_appointment/${appointment_id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to delete the appointment: ${error.message}`);
     }
   }
 
@@ -111,6 +123,19 @@ function PhysicianAppointments() {
       const data = await getAppointments(user.id);
       setAppointments(data);
       setEvents(mapToEvents(data));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const deleteAppointment = async () => {
+    try {
+      closeModal();
+      setLoading(true);
+      await postDeleteAppointment(selectedEvent.appointment_id);
+      setAppointments(appointments.filter(appointment => appointment.appointment_id !== selectedEvent.appointment_id));
     } catch (error) {
       console.log(error);
     } finally {
@@ -182,6 +207,7 @@ function PhysicianAppointments() {
             <p><strong>Start Time:</strong> {selectedEvent.start.toLocaleString()}</p>
             <p><strong>End Time:</strong> {selectedEvent.end.toLocaleString()}</p>
             <p><strong>Duration:</strong> 1 hour</p>
+            {!selectedEvent.isBooked && <Button className="mt-2" bgColor="#DC2626" onClick={deleteAppointment}>Delete</Button>}
           </div>
         </Modal>
       )}
