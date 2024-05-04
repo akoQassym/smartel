@@ -263,7 +263,7 @@ async def cancel_appointment(appointment_id: str):
 
 @app.delete('/delete_appointment/{appointment_id}', status_code=HTTPStatus.OK)
 async def delete_appointment(appointment_id: str):
-    deleted = await crud_appointment.delete(appointment_id, async_session)
+    deleted = await crud_appointment.delete(async_session, filter={"appointment_id": appointment_id})
     return {"message": "Appointment deleted successfully", "data": deleted}
 
 @app.post('/book_appointment/{appointment_id}/{patient_id}', status_code=HTTPStatus.OK)
