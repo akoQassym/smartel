@@ -1,4 +1,3 @@
-# SWE Course Project
 # Smartel - Online Telehealth Portal
 
 ## Prototype Designs
