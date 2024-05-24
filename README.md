@@ -4,6 +4,12 @@
 
 # Smartel - Online Telehealth Portal
 
+## Tech Stack
+
+- React frontend
+- FastAPI backend
+- PostgreSQL backend database, hosted on AWS
+
 ## Features
 
 - Schedule appointments as a physician
@@ -22,12 +28,6 @@
   <div align="center">
     <img src="readmepics/viewsummary.gif" alt="View summary" />
   </div>
-
-## Tech Stack
-
-- React frontend
-- FastAPI backend
-- PostgreSQL backend database, hosted on AWS
 
 ## Backend commands
 
