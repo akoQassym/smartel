@@ -1,4 +1,6 @@
-![Smartel logo](readmepics/logo.png)
+<div align="center">
+  <img src="readmepics/logo.png" alt="Smartel logo" />
+</div>
 
 # Smartel - Online Telehealth Portal
 
