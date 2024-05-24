@@ -5,13 +5,21 @@
 ## Features
 
 - Schedule appointments as a physician
-  ![Schedule appointments](readmepics/scheduleappointment.gif)
+  <div align="center">
+    <img src="readmepics/scheduleappointment.gif" alt="Schedule appointments" />
+  </div>
 - AI powered consultation summary generation
-  ![Generate summary](readmepics/summarygen.gif)
+  <div align="center">
+    <img src="readmepics/summarygen.gif" alt="Generate summary" />
+  </div>
 - Book appointments as a patient
-  ![Book appointments](readmepics/bookappointment.gif)
+  <div align="center">
+    <img src="readmepics/bookappointment.gif" alt="Book appointments" />
+  </div>
 - View summary documents from previous consultations.
-  ![View summary](readmepics/viewsummary.gif)
+  <div align="center">
+    <img src="readmepics/viewsummary.gif" alt="View summary" />
+  </div>
 
 ## Backend commands
 
