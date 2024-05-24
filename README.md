@@ -23,6 +23,12 @@
     <img src="readmepics/viewsummary.gif" alt="View summary" />
   </div>
 
+## Tech Stack
+
+- React frontend
+- FastAPI backend
+- PostgreSQL backend database, hosted on AWS
+
 ## Backend commands
 
 To set up and manage the backend environment, follow these commands:
