@@ -3,9 +3,12 @@ logs
 *.log
 
 .venv
+.env
 *.local
 
 # Editor directories and files
+data
+
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -15,3 +18,4 @@ logs
 *.njsproj
 *.sln
 *.sw?
+*.pyc
