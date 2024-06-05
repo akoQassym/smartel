@@ -1,9 +1,5 @@
 const patientNavLinks = [
   {
-    link: "/medicaldocs",
-    text: "Medical Documents",
-  },
-  {
     link: "/appointmentspage",
     text: "Appointments",
   },
